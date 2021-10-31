@@ -14,10 +14,10 @@ const watchLists = {
       number: '201',
       id: '2060'
     },
-    {
-      number: '301',
-      id: '2065'
-    },
+//    {
+//      number: '301',
+//      id: '2065'
+//    },
     {
       number: '401',
       id: '2070'
@@ -63,7 +63,8 @@ const config = {
 };
 
 (async () => {
-  const browser = await playwright['chromium'].launch();
+  //const browser = await playwright['chromium'].launch();
+  const browser = await playwright['chromium'].launch({ executablePath: '/usr/bin/chromium-browser', headless: true });
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(checkUrl);
@@ -99,4 +100,5 @@ const config = {
     // await page.screenshot({ path: `room-${watch.number}.png` });
   }
   await browser.close();
+  console.log('Done');
 })();

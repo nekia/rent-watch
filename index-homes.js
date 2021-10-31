@@ -54,7 +54,8 @@ notifyLine = async (url) => {
 }
 
 (async () => {
-  const browser = await playwright['chromium'].launch({ headless: true });
+  //const browser = await playwright['chromium'].launch({ headless: true });
+  const browser = await playwright['chromium'].launch({ executablePath: '/usr/bin/chromium-browser', headless: true });
   const context = await browser.newContext({
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4595.0 Safari/537.36'
   });
@@ -85,5 +86,6 @@ notifyLine = async (url) => {
   await page.close()
   await browser.close();
   await redis.disconnect()
+  console.log('Done - Homes');
 })();
 

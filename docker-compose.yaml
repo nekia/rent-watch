@@ -4,6 +4,7 @@ volumes:
 services:
   redis:
     image: "redis:latest"
+    restart: always
     volumes:
     - redisdata:/data
     ports:
