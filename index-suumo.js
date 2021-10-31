@@ -5,7 +5,7 @@ const querystring = require('querystring');
 const BASE_URL = 'https://notify-api.line.me';
 const PATH = '/api/notify';
 const LINE_TOKEN = process.env.LINE_NOTIFY_TOKEN;
-const MAX_NOTIFIES_AT_ONCE = 1;
+const MAX_NOTIFIES_AT_ONCE = 10;
 
 const Redis = require("ioredis");
 const redis = new Redis(); // uses defaults unless given configuration object
@@ -54,8 +54,8 @@ notifyLine = async (url) => {
 }
 
 (async () => {
-  const browser = await playwright['chromium'].launch({ headless: false });
-  // const browser = await playwright['chromium'].launch({ executablePath: '/usr/bin/chromium-browser', headless: true });
+  //const browser = await playwright['chromium'].launch({ headless: false });
+  const browser = await playwright['chromium'].launch({ executablePath: '/usr/bin/chromium-browser', headless: true });
   const context = await browser.newContext({
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4595.0 Safari/537.36'
   });

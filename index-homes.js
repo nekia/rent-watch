@@ -47,7 +47,7 @@ scanPage = async (page) => {
 notifyLine = async (url) => {
   console.log(`New room !!`, url)
   config.data = querystring.stringify({
-    message: `新しい物件が掲載されました! ${url}}`,
+    message: `新しい物件が掲載されました! \n${url}`,
   })
   const response = await axios.request(config);
   await redis.set(url, 1, "EX", 432000) // expire in 5 days
