@@ -6,6 +6,8 @@ const BASE_URL = 'https://notify-api.line.me';
 const PATH = '/api/notify';
 const LINE_TOKEN = process.env.LINE_NOTIFY_TOKEN;
 const MAX_NOTIFIES_AT_ONCE = 10;
+const MAX_ROOM_PRICE = 23;
+const MIN_ROOM_SIZE = 57;
 
 const Redis = require("ioredis");
 const redis = new Redis(); // uses defaults unless given configuration object
@@ -25,18 +27,25 @@ const config = {
   })
 };
 
-scanPage = async (page) => {
+scanRoom = async (page) => {
   const moreRoomsBtns = await page.$$('.building-addRoomButtonText');
   for (let btn of moreRoomsBtns) {
     await btn.click()
   }
   const notifys = [];
   const roomLinks = await page.$$('//li[@class="building-room"]/a');
-  for (let link of roomLinks) {
+  for (let i = 0; i < roomLinks.length; i++ ) {
+    const link = roomLinks[i]
     const address = await link.getAttribute("href");
     if (!await redis.exists(address)) {
-      notifys.push(address)
-      console.log(address)
+      const price = await getPriceStr(page, i)
+      const size = await getSizeStr(page, i)
+      if (parseFloat(price) < MAX_ROOM_PRICE && parseFloat(size) > MIN_ROOM_SIZE ) {
+        notifys.push({ url: address, price: parseFloat(price), size: parseFloat(size) })
+        console.log(address, price, size)
+      } else {
+        console.log('Too expensive and/or small', address, price, size)
+      }
     } else {
       console.log('Already notified', address)
     }
@@ -44,17 +53,30 @@ scanPage = async (page) => {
   return notifys;
 }
 
-notifyLine = async (url) => {
-  console.log(`New room !!`, url)
+getPriceStr = async (page, idx) => {
+  const roomPrices = await page.$$('//span[contains(@class, "room-moneyRoomNumber")]')
+  const roomPriceStr = await roomPrices[idx].innerText()
+  return roomPriceStr
+}
+
+getSizeStr = async (page, idx) => {
+  const roomSizes = await page.$$('//span[@data-target="roomArea"]')
+  const roomSizeStr = await roomSizes[idx].innerText()
+  const roomSizeNoUnit = roomSizeStr.match(/[\d.]+/);
+  return roomSizeNoUnit[0]
+}
+
+notifyLine = async (roomObj) => {
+  console.log(`New room !!`, roomObj.url)
   config.data = querystring.stringify({
-    message: `新しい物件が掲載されました! \n${url}`,
+    message: `新しい物件が掲載されました! \n${roomObj.url}\n${roomObj.price}万円\n${roomObj.size}平米`,
   })
   const response = await axios.request(config);
-  await redis.set(url, 1, "EX", 432000) // expire in 5 days
+  await redis.set(roomObj.url, 1, "EX", 432000) // expire in 5 days
 }
 
 (async () => {
-  //const browser = await playwright['chromium'].launch({ headless: true });
+  // const browser = await playwright['chromium'].launch({ headless: true });
   const browser = await playwright['chromium'].launch({ executablePath: '/usr/bin/chromium-browser', headless: true });
   const context = await browser.newContext({
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4595.0 Safari/537.36'
@@ -62,12 +84,12 @@ notifyLine = async (url) => {
   const page = await context.newPage();
   // console.log(await page.evaluate(() => navigator.userAgent));
   await page.goto(checkUrl);
-  let notifyAddresses = [];
+  let notifyRooms = [];
   while (1) {
-    const addresses = await scanPage(page)
+    const rooms = await scanRoom(page)
 
     // Pagenation
-    notifyAddresses.push(...addresses)
+    notifyRooms.push(...rooms)
     const nextPageBtns = await page.$$('//div[@class="pagination-mediumController"]');
     const existNextPage = await nextPageBtns[1].$('//a')
     if (!existNextPage) {
@@ -79,9 +101,9 @@ notifyLine = async (url) => {
       await page.waitForTimeout(5000)
     }
   }
-  // console.log(notifyAddresses)
-  for ( let i = 0; i < notifyAddresses.length && i < MAX_NOTIFIES_AT_ONCE; i++ ) {
-    await notifyLine(notifyAddresses[i])
+  // console.log(notifyRooms)
+  for ( let i = 0; i < notifyRooms.length && i < MAX_NOTIFIES_AT_ONCE; i++ ) {
+    await notifyLine(notifyRooms[i])
   }
   await page.close()
   await browser.close();
