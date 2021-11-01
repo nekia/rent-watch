@@ -88,6 +88,6 @@ getSizeStr = async (page, idx) => {
   await page.close()
   await browser.close();
   await redis.disconnect()
-  console.log('Done - Homes');
+  console.log('Done - R-Store');
 })();
 
