@@ -3,25 +3,25 @@ const playwright = require('playwright');
 const notifier = require('./notify')
 
 const MAX_NOTIFIES_AT_ONCE = 10;
-const MAX_ROOM_PRICE = 23;
+const MAX_ROOM_PRICE = 230000;
 const MIN_ROOM_SIZE = 57;
 
 const Redis = require("ioredis");
 const redis = new Redis(); // uses defaults unless given configuration object
 
-const checkUrl = 'https://www.homes.co.jp/chintai/imayori/list/?sortBy=%24imayori%3Awantmcf&prefectureId=13&cityIds=13201%2C13202%2C13203%2C13204%2C13205%2C13206%2C13207%2C13208%2C13209%2C13210%2C13211%2C13212%2C13213%2C13214%2C13215%2C13218%2C13219%2C13220%2C13221%2C13222%2C13223%2C13224%2C13225%2C13227%2C13228%2C13229%2C13303%2C13305%2C13307%2C13308%2C13360%2C13361%2C13362%2C13363%2C13364%2C13380%2C13381%2C13382%2C13400%2C13401%2C13402%2C13420%2C13421%2C13101%2C13102%2C13103%2C13104%2C13105%2C13106%2C13108%2C13109%2C13110%2C13112%2C13113%2C13114%2C13115%2C13116%2C13117%2C13119%2C13120&monthMoneyRoom=17&monthMoneyRoomHigh=30&moneyMaintenanceInclude=1&houseArea=50&houseAgeHigh=25&mbgs=3002&newDate=1&mcfs=113201%2C340102%2C220301%2C290901%2C340501&needsCodes=14';
-
+const checkUrl = 'https://www.r-store.jp/search/?&sb_get_full1=true&sb_purpose1%5B%5D=R&sb_r_min=170000&sb_r_max=230000&sb_area_up=55&sb_pet%5B%5D=%E5%B0%8F%E5%9E%8B%E7%8A%AC%E5%8F%AF&sb_pet%5B%5D=%E7%8C%AB%E5%8F%AF&sb_purpose2%5B%5D=RO&sb_purpose2%5B%5D=RS';
+// const checkUrl = 'https://www.r-store.jp/search/?&sb_get_full1=true&sb_purpose1%5B%5D=R&sb_r_min=170000&sb_r_max=230000&sb_area_up=55&sb_purpose2%5B%5D=RO&sb_purpose2%5B%5D=RS&sort_key=1&view_num=10&get_full=true';
 
 scanRoom = async (page) => {
-  const moreRoomsBtns = await page.$$('.building-addRoomButtonText');
-  for (let btn of moreRoomsBtns) {
-    await btn.click()
-  }
   const notifys = [];
-  const roomLinks = await page.$$('//li[@class="building-room"]/a');
+  const roomLinks = await page.$$('//div[contains(@class, "post-list")]');
+  console.log(roomLinks.length)
   for (let i = 0; i < roomLinks.length; i++ ) {
     const link = roomLinks[i]
-    const address = await link.getAttribute("href");
+    const anchor = await link.$('a')
+    const addressPath = await anchor.getAttribute("href");
+    const address = `https://r-store.jp${addressPath}`
+    // console.log(address)
     if (!await redis.exists(address)) {
       const price = await getPriceStr(page, i)
       const size = await getSizeStr(page, i)
@@ -39,13 +39,15 @@ scanRoom = async (page) => {
 }
 
 getPriceStr = async (page, idx) => {
-  const roomPrices = await page.$$('//span[contains(@class, "room-moneyRoomNumber")]')
+  const roomPrices = await page.$$('//h3[contains(@class, "post-price")]')
   const roomPriceStr = await roomPrices[idx].innerText()
-  return roomPriceStr
+  const prices = roomPriceStr.split('/')
+  const priceNoUnit = prices[0].match(/[\d,]+/);
+  return priceNoUnit[0].replace(/,/g, '')
 }
 
 getSizeStr = async (page, idx) => {
-  const roomSizes = await page.$$('//span[@data-target="roomArea"]')
+  const roomSizes = await page.$$('//span[contains(@class, "spec-area")]')
   const roomSizeStr = await roomSizes[idx].innerText()
   const roomSizeNoUnit = roomSizeStr.match(/[\d.]+/);
   return roomSizeNoUnit[0]
@@ -67,22 +69,22 @@ getSizeStr = async (page, idx) => {
 
     // Pagenation
     notifyRooms.push(...rooms)
-    const nextPageBtns = await page.$$('//div[@class="pagination-mediumController"]');
-    const existNextPage = await nextPageBtns[1].$('//a')
-    if (!existNextPage) {
-      // console.log('End of pages')
+    const nextPageAnchor = await page.$('//li[@class="page-nav-next"]/a');
+    if (!nextPageAnchor) {
+      console.log('End of pages')
       break
     } else {
-      // console.log('Next page')
-      await existNextPage.click()
+      console.log('Next page')
+      await nextPageAnchor.click()
       await page.waitForTimeout(5000)
     }
   }
-  // console.log(notifyRooms)
+
   for ( let i = 0; i < notifyRooms.length && i < MAX_NOTIFIES_AT_ONCE; i++ ) {
     await notifier.notifyLine(notifyRooms[i])
     await redis.set(notifyRooms[i].url, 1, "EX", 432000) // expire in 5 days
   }
+  
   await page.close()
   await browser.close();
   await redis.disconnect()
