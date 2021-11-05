@@ -3,13 +3,14 @@ const playwright = require('playwright');
 const notifier = require('./notify')
 
 const MAX_NOTIFIES_AT_ONCE = 10;
-const MAX_ROOM_PRICE = 230000;
-const MIN_ROOM_SIZE = 57;
+const MAX_ROOM_PRICE = 210000;
+const MIN_ROOM_SIZE = 60;
 
 const Redis = require("ioredis");
 const redis = new Redis(); // uses defaults unless given configuration object
 
-const checkUrl = 'https://www.r-store.jp/search/?&sb_get_full1=true&sb_purpose1%5B%5D=R&sb_r_min=170000&sb_r_max=230000&sb_area_up=55&sb_pet%5B%5D=%E5%B0%8F%E5%9E%8B%E7%8A%AC%E5%8F%AF&sb_pet%5B%5D=%E7%8C%AB%E5%8F%AF&sb_purpose2%5B%5D=RO&sb_purpose2%5B%5D=RS';
+const checkUrl = 'https://www.r-store.jp/search/?&sb_get_full1=true&sb_purpose1%5B%5D=R&sb_r_min=170000&sb_r_max=210000&sb_walk_from=15&sb_area_up=60&sb_age_of_building=20&sb_kodawari_category%5B%5D=2%E9%9A%8E%E4%BB%A5%E4%B8%8A&sb_c%5B%5D=13105&sb_c%5B%5D=13110&sb_c%5B%5D=13112&sb_c%5B%5D=13114&sb_c%5B%5D=13115&sb_c%5B%5D=13120&sb_c%5B%5D=13116&sb_c%5B%5D=13203&sb_c%5B%5D=13204&sb_c%5B%5D=13210&sb_c%5B%5D=13214&sb_purpose2%5B%5D=RO&sb_purpose2%5B%5D=RS&sort_key=1&view_num=10&get_full=true';
+// const checkUrl = 'https://www.r-store.jp/search/?&sb_get_full1=true&sb_purpose1%5B%5D=R&sb_r_min=170000&sb_r_max=230000&sb_area_up=55&sb_pet%5B%5D=%E5%B0%8F%E5%9E%8B%E7%8A%AC%E5%8F%AF&sb_pet%5B%5D=%E7%8C%AB%E5%8F%AF&sb_purpose2%5B%5D=RO&sb_purpose2%5B%5D=RS';
 // const checkUrl = 'https://www.r-store.jp/search/?&sb_get_full1=true&sb_purpose1%5B%5D=R&sb_r_min=170000&sb_r_max=230000&sb_area_up=55&sb_purpose2%5B%5D=RO&sb_purpose2%5B%5D=RS&sort_key=1&view_num=10&get_full=true';
 
 scanRoom = async (page) => {
@@ -25,7 +26,7 @@ scanRoom = async (page) => {
     if (!await redis.exists(address)) {
       const price = await getPriceStr(page, i)
       const size = await getSizeStr(page, i)
-      if (parseFloat(price) < MAX_ROOM_PRICE && parseFloat(size) > MIN_ROOM_SIZE ) {
+      if (parseFloat(price) <= MAX_ROOM_PRICE && parseFloat(size) >= MIN_ROOM_SIZE ) {
         notifys.push({ url: address, price: parseFloat(price), size: parseFloat(size) })
         console.log(address, price, size)
       } else {
