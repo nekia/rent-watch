@@ -8,9 +8,10 @@ const MIN_ROOM_SIZE = 60;
 const MIN_FLOOR_LEVEL = 3;
 
 const Redis = require("ioredis");
-const redis = new Redis(); // uses defaults unless given configuration object
+//const redis = new Redis(); // uses defaults unless given configuration object
+const redis = new Redis(32565); // uses defaults unless given configuration object
 
-const checkUrl = 'https://suumo.jp/jj/chintai/ichiran/FR301FC005/?ar=030&bs=040&fw2=&pc=30&po1=25&po2=99&ta=13&sc=13105&sc=13110&sc=13112&sc=13114&sc=13115&sc=13120&sc=13116&sc=13203&sc=13204&sc=13210&sc=13214&cb=16.0&ct=20.0&et=10&mb=60&mt=9999999&cn=20&tc=0401303&tc=0400101&tc=0400104&shkr1=03&shkr2=03&shkr3=03&shkr4=03';
+const checkUrl = 'https://suumo.jp/jj/chintai/ichiran/FR301FC001/?ar=030&bs=040&ta=13&sc=13105&sc=13113&sc=13110&sc=13112&sc=13114&sc=13115&sc=13120&sc=13116&sc=13203&sc=13210&sc=13214&cb=16.0&ct=20.0&et=10&cn=20&mb=60&mt=9999999&tc=0401303&tc=0400101&tc=0400104&shkr1=03&shkr2=03&shkr3=03&shkr4=03&fw2=';
 
 scanRoomDetail = async (context, address) => {
   const roomPage = await context.newPage();
@@ -21,6 +22,7 @@ scanRoomDetail = async (context, address) => {
   const floorLevel = await getFloorLevel(roomPage)
   const location = await getLocation(roomPage)
   console.log(price, size, floorLevel, location)
+  await roomPage.close();
   return { address, price, size, floorLevel, location }
 }
 
@@ -95,8 +97,8 @@ getLocation = async (page) => {
 }
 
 (async () => {
-  const browser = await playwright['chromium'].launch({ headless: true });
-  // const browser = await playwright['chromium'].launch({ executablePath: '/usr/bin/chromium-browser', headless: true });
+  // const browser = await playwright['chromium'].launch({ headless: true });
+  const browser = await playwright['chromium'].launch({ executablePath: '/usr/bin/chromium-browser', headless: true });
   const context = await browser.newContext({
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4595.0 Safari/537.36'
   });
