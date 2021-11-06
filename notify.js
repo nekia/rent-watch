@@ -19,9 +19,9 @@ const config = {
 };
 
 notifyLine = async (roomObj) => {
-  console.log(`New room !!`, roomObj.url)
+  console.log(`New room !!`, roomObj.address)
   config.data = querystring.stringify({
-    message: `新しい物件が掲載されました! \n${roomObj.url}\n${roomObj.price}万円\n${roomObj.size}平米`,
+    message: `新しい物件が掲載されました! \n${roomObj.price}万円\t${roomObj.size}平米\t${roomObj.location}\n${roomObj.address}`,
   })
   const response = await axios.request(config);
 }

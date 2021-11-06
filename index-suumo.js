@@ -2,16 +2,41 @@ const playwright = require('playwright');
 
 const notifier = require('./notify')
 
-const MAX_NOTIFIES_AT_ONCE = 10;
-const MAX_ROOM_PRICE = 23;
-const MIN_ROOM_SIZE = 57;
+const MAX_NOTIFIES_AT_ONCE = 200;
+const MAX_ROOM_PRICE = 20;
+const MIN_ROOM_SIZE = 60;
+const MIN_FLOOR_LEVEL = 3;
 
 const Redis = require("ioredis");
 const redis = new Redis(); // uses defaults unless given configuration object
 
-const checkUrl = 'https://suumo.jp/jj/chintai/ichiran/FR301FC001/?ar=030&bs=040&fw2=&pc=30&po1=25&po2=99&ta=13&sc=13101&sc=13102&sc=13103&sc=13104&sc=13105&sc=13113&sc=13109&sc=13110&sc=13112&sc=13114&sc=13115&sc=13120&sc=13116&sc=13202&sc=13203&sc=13204&sc=13207&sc=13208&sc=13210&sc=13211&sc=13214&sc=13215&ts=1&cb=15.0&ct=25.0&et=9999999&mb=55&mt=9999999&cn=25&tc=0401303&tc=0400101&tc=0400104&tc=0400501&tc=0401102&tc=0401106&shkr1=03&shkr2=03&shkr3=03&shkr4=03';
+const checkUrl = 'https://suumo.jp/jj/chintai/ichiran/FR301FC005/?ar=030&bs=040&fw2=&pc=30&po1=25&po2=99&ta=13&sc=13105&sc=13110&sc=13112&sc=13114&sc=13115&sc=13120&sc=13116&sc=13203&sc=13204&sc=13210&sc=13214&cb=16.0&ct=20.0&et=10&mb=60&mt=9999999&cn=20&tc=0401303&tc=0400101&tc=0400104&shkr1=03&shkr2=03&shkr3=03&shkr4=03';
 
-scanRoom = async (page) => {
+scanRoomDetail = async (context, address) => {
+  const roomPage = await context.newPage();
+  await roomPage.goto(address);
+  await roomPage.waitForTimeout(1000)
+  const price = await getPriceFloat(roomPage)
+  const size = await getSizeFloat(roomPage)
+  const floorLevel = await getFloorLevel(roomPage)
+  const location = await getLocation(roomPage)
+  console.log(price, size, floorLevel, location)
+  return { address, price, size, floorLevel, location }
+}
+
+createKeyFromDetail = (detailObj) => {
+  const key = [
+    detailObj.price,
+    detailObj.size,
+    detailObj.floorLevel.floorLevel,
+    detailObj.floorLevel.floorTopLevel,
+    detailObj.location
+  ].join('-');
+  console.log(key)
+  return key
+}
+
+scanRoom = async (context, page) => {
   const eachDoorBtn = await page.$('//span[contains(@class, "fr_list-eachicon--door")]');
   await eachDoorBtn.click()
   await page.waitForTimeout(5000)
@@ -21,41 +46,57 @@ scanRoom = async (page) => {
     const link = roomLinks[i];
     const pathAddress = await link.getAttribute("href");
     const address = `https://suumo.jp${pathAddress}`;
-    if (!await redis.exists(address)) {
-      const price = await getPriceStr(page, i)
-      const size = await getSizeStr(page, i)
-      if (parseFloat(price) < MAX_ROOM_PRICE && parseFloat(size) > MIN_ROOM_SIZE ) {
-        notifys.push({ url: address, price: parseFloat(price), size: parseFloat(size) })
-        console.log(address, price, size)
+    const detailObj = await scanRoomDetail(context, address)
+    const key = createKeyFromDetail(detailObj)
+    if (!await redis.exists(key)) {
+      // const price = await getPriceStr(page, i)
+      // const size = await getSizeStr(page, i)
+      if (detailObj.price <= MAX_ROOM_PRICE &&
+          detailObj.size >= MIN_ROOM_SIZE &&
+          detailObj.floorLevel.floorLevel != detailObj.floorLevel.floorTopLevel &&
+          detailObj.floorLevel.floorLevel >= MIN_FLOOR_LEVEL ) {
+        notifys.push(detailObj)
+        console.log(address, detailObj)
       } else {
-        console.log('Too expensive and/or small', address, price, size)
+        console.log('Too expensive and/or small', address, detailObj.price, detailObj.size)
       }
     } else {
-      console.log('Already notified', address)
+      console.log('Already notified', key)
     }
   }
   return notifys;
 }
 
-getPriceStr = async (page, idx) => {
-  const roomPrices = await page.$$('//div[contains(@class, "detailbox-property-point")]')
-  const priceStr = await roomPrices[idx].innerText();
+getPriceFloat = async (page) => {
+  const roomPriceElm = await page.$('//div[contains(@class, "property_view_main-emphasis")]')
+  const priceStr = await roomPriceElm.innerText();
   const priceWoUnit = priceStr.match(/[\d.]+/);
-  return priceWoUnit[0]
+  return parseFloat(priceWoUnit[0])
 }
 
-getSizeStr = async (page, idx) => {
-  const roomDetails = await page.$$('//div[@class="property-body-element"]/div[@class="detailbox"]/div[@class="detailbox-property"]')
-  const roomDetailCol = await roomDetails[idx].$('//td[contains(@class, "detailbox-property--col3")]')
-  const roomSize = await roomDetailCol.$$('//div')
-  const roomSizeStr = await roomSize[1].innerText()
+getSizeFloat = async (page) => {
+  const roomSizeElm = await page.$('//div[text()[contains(., "専有面積")]]/following-sibling::div[contains(@class, "property_data-body")]')
+  const roomSizeStr = await roomSizeElm.innerText()
   const roomSizeNoUnit = roomSizeStr.match(/[\d.]+/);
-  return roomSizeNoUnit[0]
+  return parseFloat(roomSizeNoUnit[0])
+}
+
+getFloorLevel = async (page) => {
+  const floorLevel = await page.$('//th[text()[contains(., "階建")]]/following-sibling::td[1]')
+  const floorLevelStr = await floorLevel.innerText()
+  const floorLevelNoUnit = floorLevelStr.match(/[\d.]+/g);
+  return { floorLevel: parseInt(floorLevelNoUnit[0]), floorTopLevel: parseInt(floorLevelNoUnit[1])}
+}
+
+getLocation = async (page) => {
+  const address = await page.$('//div[contains(@class, "property_view_detail--location")]/div[contains(@class, "property_view_detail-body")]/div')
+  const addressStr = await address.innerText().then( result => result.trim() );
+  return addressStr
 }
 
 (async () => {
-  // const browser = await playwright['chromium'].launch({ headless: true });
-  const browser = await playwright['chromium'].launch({ executablePath: '/usr/bin/chromium-browser', headless: true });
+  const browser = await playwright['chromium'].launch({ headless: true });
+  // const browser = await playwright['chromium'].launch({ executablePath: '/usr/bin/chromium-browser', headless: true });
   const context = await browser.newContext({
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4595.0 Safari/537.36'
   });
@@ -64,7 +105,7 @@ getSizeStr = async (page, idx) => {
   await page.goto(checkUrl);
   let notifyRooms = [];
   while (1) {
-    const roomes = await scanRoom(page)
+    const roomes = await scanRoom(context, page)
 
     // Pagenation
     notifyRooms.push(...roomes)
@@ -80,8 +121,15 @@ getSizeStr = async (page, idx) => {
   }
 
   for ( let i = 0; i < notifyRooms.length && i < MAX_NOTIFIES_AT_ONCE; i++ ) {
-    await notifier.notifyLine(notifyRooms[i])
-    await redis.set(notifyRooms[i].url, 1, "EX", 432000) // expire in 5 days
+    const key = createKeyFromDetail(notifyRooms[i])
+    if (!await redis.exists(key)) {
+      await notifier.notifyLine(notifyRooms[i])
+      // await redis.set(key, 1, "EX", 432000) // expire in 5 days
+      console.log('Notified (Paased redundant check)', key)
+      await redis.set(key, 1) // expire in 5 days
+    } else {
+      console.log('Already notified (redundant check)', key)
+    }
   }
 
   await page.close()
