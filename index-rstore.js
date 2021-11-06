@@ -2,35 +2,63 @@ const playwright = require('playwright');
 
 const notifier = require('./notify')
 
-const MAX_NOTIFIES_AT_ONCE = 10;
-const MAX_ROOM_PRICE = 210000;
+const MAX_NOTIFIES_AT_ONCE = 200;
+const MAX_ROOM_PRICE = 200000;
 const MIN_ROOM_SIZE = 60;
+const MIN_FLOOR_LEVEL = 3;
 
 const Redis = require("ioredis");
-const redis = new Redis(); // uses defaults unless given configuration object
+// const redis = new Redis(); // uses defaults unless given configuration object
+const redis = new Redis(32565); // uses defaults unless given configuration object
 
-const checkUrl = 'https://www.r-store.jp/search/?&sb_get_full1=true&sb_purpose1%5B%5D=R&sb_r_min=170000&sb_r_max=210000&sb_walk_from=15&sb_area_up=60&sb_age_of_building=20&sb_kodawari_category%5B%5D=2%E9%9A%8E%E4%BB%A5%E4%B8%8A&sb_c%5B%5D=13105&sb_c%5B%5D=13110&sb_c%5B%5D=13112&sb_c%5B%5D=13114&sb_c%5B%5D=13115&sb_c%5B%5D=13120&sb_c%5B%5D=13116&sb_c%5B%5D=13203&sb_c%5B%5D=13204&sb_c%5B%5D=13210&sb_c%5B%5D=13214&sb_purpose2%5B%5D=RO&sb_purpose2%5B%5D=RS&sort_key=1&view_num=10&get_full=true';
+const checkUrl = 'https://www.r-store.jp/search/?&sb_get_full1=true&sb_purpose1%5B%5D=R&sb_r_min=160000&sb_r_max=210000&sb_walk_from=15&sb_area_up=60&sb_age_of_building=20&sb_kodawari_category%5B%5D=2%E9%9A%8E%E4%BB%A5%E4%B8%8A&sb_c%5B%5D=13101&sb_c%5B%5D=13104&sb_c%5B%5D=13105&sb_c%5B%5D=13113&sb_c%5B%5D=13110&sb_c%5B%5D=13112&sb_c%5B%5D=13114&sb_c%5B%5D=13115&sb_c%5B%5D=13120&sb_c%5B%5D=13116&sb_c%5B%5D=13203&sb_c%5B%5D=13204&sb_c%5B%5D=13210&sb_c%5B%5D=13214&sb_purpose2%5B%5D=RO&sb_purpose2%5B%5D=RS&sort_key=1&view_num=10&get_full=true';
 // const checkUrl = 'https://www.r-store.jp/search/?&sb_get_full1=true&sb_purpose1%5B%5D=R&sb_r_min=170000&sb_r_max=230000&sb_area_up=55&sb_pet%5B%5D=%E5%B0%8F%E5%9E%8B%E7%8A%AC%E5%8F%AF&sb_pet%5B%5D=%E7%8C%AB%E5%8F%AF&sb_purpose2%5B%5D=RO&sb_purpose2%5B%5D=RS';
 // const checkUrl = 'https://www.r-store.jp/search/?&sb_get_full1=true&sb_purpose1%5B%5D=R&sb_r_min=170000&sb_r_max=230000&sb_area_up=55&sb_purpose2%5B%5D=RO&sb_purpose2%5B%5D=RS&sort_key=1&view_num=10&get_full=true';
 
-scanRoom = async (page) => {
+scanRoomDetail = async (context, address) => {
+  const roomPage = await context.newPage();
+  await roomPage.goto(address);
+  await roomPage.waitForTimeout(1000)
+  const price = await getPriceInt(roomPage)
+  const size = await getSizeFloat(roomPage)
+  const floorLevel = await getFloorLevel(roomPage)
+  const location = await getLocation(roomPage)
+  console.log(price, size, floorLevel, location)
+  await roomPage.close();
+  return { address, price, size, floorLevel, location }
+}
+
+createKeyFromDetail = (detailObj) => {
+  const key = [
+    detailObj.price,
+    detailObj.size,
+    detailObj.floorLevel.floorLevel,
+    detailObj.floorLevel.floorTopLevel,
+    detailObj.location
+  ].join('-');
+  console.log(key)
+  return key
+}
+
+scanRoom = async (context, page) => {
   const notifys = [];
   const roomLinks = await page.$$('//div[contains(@class, "post-list")]');
-  console.log(roomLinks.length)
   for (let i = 0; i < roomLinks.length; i++ ) {
     const link = roomLinks[i]
     const anchor = await link.$('a')
     const addressPath = await anchor.getAttribute("href");
     const address = `https://r-store.jp${addressPath}`
-    // console.log(address)
-    if (!await redis.exists(address)) {
-      const price = await getPriceStr(page, i)
-      const size = await getSizeStr(page, i)
-      if (parseFloat(price) <= MAX_ROOM_PRICE && parseFloat(size) >= MIN_ROOM_SIZE ) {
-        notifys.push({ url: address, price: parseFloat(price), size: parseFloat(size) })
-        console.log(address, price, size)
+    const detailObj = await scanRoomDetail(context, address)
+    const key = createKeyFromDetail(detailObj)
+    if (!await redis.exists(key)) {
+      if (detailObj.price <= MAX_ROOM_PRICE &&
+          detailObj.size >= MIN_ROOM_SIZE &&
+          detailObj.floorLevel.floorLevel != detailObj.floorLevel.floorTopLevel &&
+          detailObj.floorLevel.floorLevel >= MIN_FLOOR_LEVEL ) {
+        notifys.push(detailObj)
+        console.log(address, detailObj)
       } else {
-        console.log('Too expensive and/or small', address, price, size)
+        console.log('Too expensive and/or small', address, detailObj.price, detailObj.size)
       }
     } else {
       console.log('Already notified', address)
@@ -39,21 +67,39 @@ scanRoom = async (page) => {
   return notifys;
 }
 
-getPriceStr = async (page, idx) => {
-  const roomPrices = await page.$$('//h3[contains(@class, "post-price")]')
-  const roomPriceStr = await roomPrices[idx].innerText()
-  const prices = roomPriceStr.split('/')
-  const priceNoUnit = prices[0].match(/[\d,]+/);
-  return priceNoUnit[0].replace(/,/g, '')
+getPriceInt = async (page) => {
+  const roomPriceElm = await page.$('//h3[text()[contains(., "賃料")]]/following-sibling::p[1]')
+  const priceStr = await roomPriceElm.innerText();
+  const priceNoUnit = priceStr.match(/[\d,]+/);
+  return parseInt(priceNoUnit[0].replace(/,/g, ''))
 }
 
-getSizeStr = async (page, idx) => {
-  const roomSizes = await page.$$('//span[contains(@class, "spec-area")]')
-  const roomSizeStr = await roomSizes[idx].innerText()
+getSizeFloat = async (page) => {
+  const roomSizeElm = await page.$('//h3[text()[contains(., "面積")]]/following-sibling::p[1]')
+  const roomSizeStr = await roomSizeElm.innerText()
   const roomSizeNoUnit = roomSizeStr.match(/[\d.]+/);
-  return roomSizeNoUnit[0]
+  return parseFloat(roomSizeNoUnit[0])
 }
 
+getFloorLevel = async (page) => {
+  // e.g. 鉄筋コンクリート造 地上3階建て
+  // e.e. 鉄筋コンクリート造 地下1階 地上10階建て
+  const floorTopLevel = await page.$('//h3[text()[contains(., "構造")]]/following-sibling::p[1]')
+  const floorTopLevelStr = await floorTopLevel.innerText()
+  const floorTopLevelNoUnit = floorTopLevelStr.match(/[\d]+/g);
+
+  const floorLevel = await page.$('//h3[text()[contains(., "所在階")]]/following-sibling::p[1]')
+  const floorLevelStr = await floorLevel.innerText()
+  const floorLevelNoUnit = floorLevelStr.match(/[\d]+/g);
+
+  return { floorLevel: parseInt(floorLevelNoUnit[0]), floorTopLevel: parseInt(floorTopLevelNoUnit.slice(-1))}
+}
+
+getLocation = async (page) => {
+  const address = await page.$('//h3[text()[contains(., "所在地")]]/following-sibling::p[1]/a')
+  const addressStr = await address.innerText().then( result => result.trim() );
+  return addressStr
+}
 
 (async () => {
   // const browser = await playwright['chromium'].launch({ headless: true });
@@ -66,7 +112,7 @@ getSizeStr = async (page, idx) => {
   await page.goto(checkUrl);
   let notifyRooms = [];
   while (1) {
-    const rooms = await scanRoom(page)
+    const rooms = await scanRoom(context, page)
 
     // Pagenation
     notifyRooms.push(...rooms)
@@ -82,8 +128,15 @@ getSizeStr = async (page, idx) => {
   }
 
   for ( let i = 0; i < notifyRooms.length && i < MAX_NOTIFIES_AT_ONCE; i++ ) {
-    await notifier.notifyLine(notifyRooms[i])
-    await redis.set(notifyRooms[i].url, 1, "EX", 432000) // expire in 5 days
+    const key = createKeyFromDetail(notifyRooms[i])
+    if (!await redis.exists(key)) {
+      await notifier.notifyLine(notifyRooms[i])
+      // await redis.set(key, 1, "EX", 432000) // expire in 5 days
+      console.log('Notified (Paased redundant check)', key)
+      await redis.set(key, 1) // expire in 5 days
+    } else {
+      console.log('Already notified (redundant check)', key)
+    }
   }
   
   await page.close()
