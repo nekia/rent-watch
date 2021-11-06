@@ -11,7 +11,7 @@ const Redis = require("ioredis");
 //const redis = new Redis(); // uses defaults unless given configuration object
 const redis = new Redis(32565); // uses defaults unless given configuration object
 
-const checkUrl = 'https://suumo.jp/jj/chintai/ichiran/FR301FC001/?ar=030&bs=040&ta=13&sc=13105&sc=13113&sc=13110&sc=13112&sc=13114&sc=13115&sc=13120&sc=13116&sc=13203&sc=13210&sc=13214&cb=16.0&ct=20.0&et=10&cn=20&mb=60&mt=9999999&tc=0401303&tc=0400101&tc=0400104&shkr1=03&shkr2=03&shkr3=03&shkr4=03&fw2=';
+const checkUrl = 'https://suumo.jp/jj/chintai/ichiran/FR301FC001/?ar=030&bs=040&ta=13&sc=13101&sc=13104&sc=13105&sc=13113&sc=13110&sc=13112&sc=13114&sc=13115&sc=13120&sc=13116&sc=13203&sc=13204&sc=13210&sc=13211&sc=13214&cb=16.0&ct=20.0&et=15&cn=20&mb=60&mt=9999999&tc=0401303&tc=0400101&shkr1=03&shkr2=03&shkr3=03&shkr4=03&fw2=&srch_navi=1';
 
 scanRoomDetail = async (context, address) => {
   const roomPage = await context.newPage();
