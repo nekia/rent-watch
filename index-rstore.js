@@ -56,7 +56,7 @@ scanRoom = async (context, page) => {
           detailObj.floorLevel.floorLevel != detailObj.floorLevel.floorTopLevel &&
           detailObj.floorLevel.floorLevel >= MIN_FLOOR_LEVEL ) {
         notifys.push(detailObj)
-        console.log(address, detailObj)
+        console.log(address, key)
       } else {
         console.log('Too expensive and/or small', key)
       }
