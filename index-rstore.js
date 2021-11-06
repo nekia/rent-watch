@@ -58,10 +58,10 @@ scanRoom = async (context, page) => {
         notifys.push(detailObj)
         console.log(address, detailObj)
       } else {
-        console.log('Too expensive and/or small', address, detailObj.price, detailObj.size)
+        console.log('Too expensive and/or small', key)
       }
     } else {
-      console.log('Already notified', address)
+      console.log('Already notified', key)
     }
   }
   return notifys;
