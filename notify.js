@@ -21,7 +21,7 @@ const config = {
 notifyLine = async (roomObj) => {
   console.log(`New room !!`, roomObj.address)
   config.data = querystring.stringify({
-    message: `${roomObj.price}万円  ${roomObj.size}平米  ${roomObj.location}\n${roomObj.address}`,
+    message: `${roomObj.price}万円  ${roomObj.size}平米  ${roomObj.floorLevel.floorLevel}/${roomObj.floorLevel.floorTopLevel}\n${roomObj.location}\n${roomObj.address}`,
   })
   const response = await axios.request(config);
 }
