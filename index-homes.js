@@ -104,8 +104,8 @@ getNewContext = async (browser) => {
 }
 
 (async () => {
-  const browser = await playwright['chromium'].launch({ headless: false });
-  // const browser = await playwright['chromium'].launch({ executablePath: '/usr/bin/chromium-browser', headless: true });
+  // const browser = await playwright['chromium'].launch({ headless: false });
+  const browser = await playwright['chromium'].launch({ executablePath: '/usr/bin/chromium-browser', headless: true });
   const context = await getNewContext(browser);
 
   const page = await context.newPage();
