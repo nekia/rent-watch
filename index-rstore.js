@@ -17,7 +17,7 @@ const checkUrl = 'https://www.r-store.jp/search/?&sb_get_full1=true&sb_purpose1%
 
 scanRoomDetail = async (context, address) => {
   const roomPage = await context.newPage();
-  await roomPage.goto(address).catch((err) => console.log('Handled an error'));
+  await roomPage.goto(address)
   await roomPage.waitForTimeout(1000)
   const price = await getPriceInt(roomPage)
   const size = await getSizeFloat(roomPage)
@@ -104,10 +104,11 @@ getLocation = async (page) => {
 (async () => {
   // const browser = await playwright['chromium'].launch({ headless: false });
   const browser = await playwright['chromium'].launch({ executablePath: '/usr/bin/chromium-browser', headless: true });
-  // const context = await browser.newContext({
-  //   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4595.0 Safari/537.36'
-  // });
-  const context = await browser.newContext();
+  const context = await browser.newContext({
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4595.0 Safari/537.36',
+    ignoreHTTPSErrors: true
+  });
+  await context.setDefaultNavigationTimeout(60000)
   const page = await context.newPage();
   // console.log(await page.evaluate(() => navigator.userAgent));
   await page.goto(checkUrl);

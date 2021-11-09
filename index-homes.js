@@ -107,6 +107,7 @@ getNewContext = async (browser) => {
   // const browser = await playwright['chromium'].launch({ headless: false });
   const browser = await playwright['chromium'].launch({ executablePath: '/usr/bin/chromium-browser', headless: true });
   const context = await getNewContext(browser);
+  await context.setDefaultNavigationTimeout(60000);
 
   const page = await context.newPage();
   // console.log(await page.evaluate(() => navigator.userAgent));

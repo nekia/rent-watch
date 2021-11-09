@@ -100,6 +100,7 @@ getLocation = async (page) => {
   const context = await browser.newContext({
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4595.0 Safari/537.36'
   });
+  await context.setDefaultNavigationTimeout(60000);
   const page = await context.newPage();
   // console.log(await page.evaluate(() => navigator.userAgent));
   await page.goto(checkUrl);
