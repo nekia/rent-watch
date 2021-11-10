@@ -5,7 +5,7 @@ const notifier = require('./notify')
 const MAX_NOTIFIES_AT_ONCE = 200;
 const MAX_ROOM_PRICE = 20;
 const MIN_ROOM_SIZE = 60;
-const MIN_FLOOR_LEVEL = 3;
+const MIN_FLOOR_LEVEL = 2;
 
 const Redis = require("ioredis");
 //const redis = new Redis(); // uses defaults unless given configuration object
