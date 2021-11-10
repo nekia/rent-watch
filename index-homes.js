@@ -1,10 +1,18 @@
 const utils = require('./utils')
 
-const MAX_ROOM_PRICE = 20;
-const MIN_ROOM_SIZE = 60;
+const MAX_ROOM_PRICE = 21;
+const MIN_ROOM_SIZE = 57;
 const MIN_FLOOR_LEVEL = 2;
 
-const checkUrl = 'https://www.homes.co.jp/chintai/imayori/list/?sortBy=%24imayori%3Awantmcf&prefectureId=13&cityIds=13101%2C13104%2C13105%2C13110%2C13112%2C13115%2C13114%2C13113%2C13116%2C13120%2C13203%2C13204%2C13211%2C13210%2C13214&monthMoneyRoom=16&monthMoneyRoomHigh=20&houseArea=60&walkMinutes=20&houseAgeHigh=20&newDate=3&mcfs=340102%2C340501&needsCodes=11%2C5&currentHouseArea=60';
+// エリア: 千代田区/新宿区/文京区/目黒区/世田谷区/渋谷区/中野区/杉並区/豊島区/練馬区
+// エリア: 武蔵野市/三鷹市/小金井市/小平市/国分寺市
+// 賃料: 15 - 30
+// 専有面積: 50 -
+// 駅徒歩分数: 15分以内
+// 築年数: 20年以内
+// こだわり: 2階以上/南向き
+// 情報の公開日: 本日
+const checkUrl = 'https://www.homes.co.jp/chintai/imayori/list/?prefectureId=13&cityIds=13101%2C13104%2C13105%2C13110%2C13112%2C13113%2C13114%2C13115%2C13116%2C13120%2C13203%2C13204%2C13210%2C13211%2C13214&monthMoneyRoom=15&monthMoneyRoomHigh=30&houseArea=50&walkMinutes=15&houseAgeHigh=20&newDate=1&mcfs=340102%2C340501&needsCodes=5';
 
 module.exports = class Homes {
   constructor(browser, context, redis) {
@@ -22,12 +30,12 @@ module.exports = class Homes {
     const existNextPage = await nextPageBtns[1].$('//a')
     if (!existNextPage) {
       console.log('End of pages')
-      return { nextPageExist: false, page };
+      return { nextPageExist: false, nextPage: page };
     } else {
       console.log('Next page')
       await existNextPage.click()
       await page.waitForTimeout(5000)
-      return { nextPageExist: true, page };
+      return { nextPageExist: true, nextPage: page };
     }
   }
   
