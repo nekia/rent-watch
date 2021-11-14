@@ -46,6 +46,7 @@ const MAX_NOTIFIES_AT_ONCE = 200;
         await utils.notifyLine(notifyRooms[i])
         console.log('Notified (Paased redundant check)', key)
         await redis.set(key, 1)
+        await redis.set(notifyRooms[i].address, 1)
       } else {
         console.log('Already notified (redundant check)', key)
       }

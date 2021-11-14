@@ -59,6 +59,10 @@ module.exports = class Rstore {
       const anchor = await link.$('a')
       const addressPath = await anchor.getAttribute("href");
       const address = `https://r-store.jp${addressPath}`
+      if (await this.redis.exists(address)) {
+        console.log('Already notified', address)
+        continue
+      }
       const detailObj = await this.scanRoomDetail(address)
       const key = utils.createKeyFromDetail(detailObj)
       if (!await this.redis.exists(key)) {

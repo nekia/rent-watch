@@ -61,6 +61,10 @@ module.exports = class Suumo {
       const link = roomLinks[i];
       const pathAddress = await link.getAttribute("href");
       const address = `https://suumo.jp${pathAddress}`;
+      if (await this.redis.exists(address)) {
+        console.log('Already notified', address)
+        continue
+      }
       const detailObj = await this.scanRoomDetail(address)
       const key = utils.createKeyFromDetail(detailObj)
       if (!await this.redis.exists(key)) {

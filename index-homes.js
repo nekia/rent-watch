@@ -65,6 +65,10 @@ module.exports = class Homes {
     for (let i = 0; i < roomLinks.length; i++ ) {
       const link = roomLinks[i]
       const address = await link.getAttribute("href");
+      if (await this.redis.exists(address)) {
+        console.log('Already notified', address)
+        continue
+      }
       const detailObj = await this.scanRoomDetail(address)
       const key = utils.createKeyFromDetail(detailObj)
       if (!await this.redis.exists(key)) {
