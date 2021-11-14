@@ -77,6 +77,7 @@ module.exports = class Rstore {
         }
       } else {
         console.log('Already notified', key)
+        await this.redis.set(detailObj.address, 1)
       }
     }
     return notifys;

@@ -79,6 +79,7 @@ module.exports = class Suumo {
         }
       } else {
         console.log('Already notified', key)
+        await this.redis.set(detailObj.address, 1)
       }
     }
     return notifys;
