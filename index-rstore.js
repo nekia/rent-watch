@@ -40,13 +40,14 @@ module.exports = class Rstore {
 
   scanRoomDetail = async (address) => {
     const roomPage = await this.context.newPage();
+    let price = 0, size = 0.0, floorLevel = {}, location = "";
     try {
       await roomPage.goto(address)
       await roomPage.waitForTimeout(1000)
-      const price = await this.getPriceInt(roomPage)
-      const size = await this.getSizeFloat(roomPage)
-      const floorLevel = await this.getFloorLevel(roomPage)
-      const location = await this.getLocation(roomPage)
+      price = await this.getPriceInt(roomPage)
+      size = await this.getSizeFloat(roomPage)
+      floorLevel = await this.getFloorLevel(roomPage)
+      location = await this.getLocation(roomPage)
       console.log(price, size, floorLevel, location)
     } catch (error) {
       console.warn('## Failed to retrieve the detail ##', address, error)
@@ -69,6 +70,9 @@ module.exports = class Rstore {
         continue
       }
       const detailObj = await this.scanRoomDetail(address)
+      if (detailObj.location.length == 0) {
+        continue;
+      }
       const key = utils.createKeyFromDetail(detailObj)
       if (!await this.redis.exists(key)) {
         if (detailObj.price <= MAX_ROOM_PRICE &&
