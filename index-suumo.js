@@ -40,14 +40,19 @@ module.exports = class Suumo {
 
   scanRoomDetail = async (address) => {
     const roomPage = await this.context.newPage();
-    await roomPage.goto(address);
-    await roomPage.waitForTimeout(1000)
-    const price = await this.getPriceFloat(roomPage)
-    const size = await this.getSizeFloat(roomPage)
-    const floorLevel = await this.getFloorLevel(roomPage)
-    const location = await this.getLocation(roomPage)
-    console.log(price, size, floorLevel, location)
-    await roomPage.close();
+    try {
+      await roomPage.goto(address);
+      await roomPage.waitForTimeout(1000)
+      const price = await this.getPriceFloat(roomPage)
+      const size = await this.getSizeFloat(roomPage)
+      const floorLevel = await this.getFloorLevel(roomPage)
+      const location = await this.getLocation(roomPage)
+      console.log(price, size, floorLevel, location)
+    } catch (error) {
+      console.warn('## Failed to retrieve the detail ##', address, error)
+    } finally {
+      await roomPage.close();
+    }
     return { address, price, size, floorLevel, location }
   }
 
