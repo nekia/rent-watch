@@ -4,15 +4,15 @@ const MAX_ROOM_PRICE = 21;
 const MIN_ROOM_SIZE = 57;
 const MIN_FLOOR_LEVEL = 2;
 
-// エリア: 千代田区/新宿区/文京区/目黒区/世田谷区/渋谷区/中野区/杉並区/豊島区/練馬区
-// エリア: 武蔵野市/三鷹市/小金井市/小平市/国分寺市
+// エリア: 千代田区/新宿区/文京区/目黒区/世田谷区/渋谷区/中野区/杉並区/豊島区
+// エリア: 武蔵野市/三鷹市/小金井市/国分寺市
 // 賃料: 15 - 23
 // 専有面積: 55 -
 // 駅徒歩分数: 15分以内
 // 築年数: 20年以内
 // こだわり: 2階以上/南向き
 // 情報の公開日: 本日の新着物件
-const checkUrl = 'https://suumo.jp/jj/chintai/ichiran/FR301FC001/?ar=030&bs=040&ta=13&sc=13101&sc=13104&sc=13105&sc=13113&sc=13110&sc=13112&sc=13114&sc=13115&sc=13120&sc=13116&sc=13203&sc=13204&sc=13210&sc=13211&sc=13214&cb=15.0&ct=23.0&et=15&cn=20&mb=55&mt=9999999&tc=0401303&tc=0400101&tc=0400104&shkr1=03&shkr2=03&shkr3=03&shkr4=03&fw2=&srch_navi=1';
+const checkUrl = 'https://suumo.jp/jj/chintai/ichiran/FR301FC001/?ar=030&bs=040&ta=13&sc=13101&sc=13104&sc=13105&sc=13113&sc=13110&sc=13112&sc=13114&sc=13115&sc=13116&sc=13203&sc=13204&sc=13210&sc=13214&cb=15.0&ct=23.0&et=15&cn=20&mb=55&mt=9999999&tc=0401303&tc=0400101&tc=0400104&shkr1=03&shkr2=03&shkr3=03&shkr4=03&fw2=&srch_navi=1';
 
 module.exports = class Suumo {
   constructor(browser, context, redis) {
