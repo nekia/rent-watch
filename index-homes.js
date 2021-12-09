@@ -1,6 +1,6 @@
 const utils = require('./utils')
 
-const MAX_ROOM_PRICE = 21;
+const MAX_ROOM_PRICE = 22;
 const MIN_ROOM_SIZE = 57;
 const MIN_FLOOR_LEVEL = 2;
 
