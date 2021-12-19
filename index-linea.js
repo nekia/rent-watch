@@ -167,7 +167,7 @@ pagenation = async (page) => {
   let page = await context.newPage();
 
   let notifyRooms = [];
-  console.log(`##### Start - Mitsui`);
+  console.log(`##### Start - Linea`);
   await page.goto(checkUrl);
   await page.waitForTimeout(1000)
 
@@ -197,7 +197,7 @@ pagenation = async (page) => {
       console.log('Already notified (redundant check)', key)
     }
   }
-  console.log(`##### Done - Mitsui`);
+  console.log(`##### Done - Linea`);
 
   await page.close()
   await browser.close();
