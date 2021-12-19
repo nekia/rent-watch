@@ -80,7 +80,7 @@ scanRoom = async (context, address) => {
       }
     }
   } catch (error) {
-    console.warn('## Failed to retrieve the detail ##', address, error)
+    console.warn('## Failed to retrieve the room info ##', address, error)
   } finally {
     await roomPage.close();
   }
@@ -134,11 +134,15 @@ scanBuilding = async (context, page) => {
   let notifyRooms = [];
   const notifys = [];
   for (let i = 0; i < roomLinks.length; i++ ) {
-    const link = roomLinks[i];
-    const pathAddress = await link.getAttribute("href");
-    console.log(pathAddress)
-    const rooms = await scanRoom(context, pathAddress)
-    notifyRooms.push(...rooms)
+    try {
+      const link = roomLinks[i];
+      const pathAddress = await link.getAttribute("href");
+      console.log(pathAddress)
+      const rooms = await scanRoom(context, pathAddress)
+      notifyRooms.push(...rooms)
+    } catch (error) {
+      console.warn('## Failed to retrieve the building info ##', address, error)
+    }
   }
   return notifyRooms;
 };
