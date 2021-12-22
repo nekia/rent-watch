@@ -2,9 +2,6 @@ const playwright = require('playwright');
 const Redis = require("ioredis");
 
 const utils = require('./utils')
-const Homes = require('./index-homes')
-const Suumo = require('./index-suumo')
-const RStore = require('./index-rstore')
 
 // const redis = new Redis(); // uses defaults unless given configuration object
 const redis = new Redis(32565); // uses defaults unless given configuration object
