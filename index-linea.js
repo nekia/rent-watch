@@ -4,7 +4,7 @@ const Redis = require("ioredis");
 const utils = require('./utils')
 
 // const redis = new Redis(); // uses defaults unless given configuration object
-const redis = new Redis(32565); // uses defaults unless given configuration object
+const redis = new Redis(32089); // uses defaults unless given configuration object
 
 const MAX_ROOM_PRICE = 220000;
 const MIN_ROOM_SIZE = 57;
