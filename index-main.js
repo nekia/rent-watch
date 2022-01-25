@@ -7,7 +7,7 @@ const Suumo = require('./index-suumo')
 const RStore = require('./index-rstore')
 
 // const redis = new Redis(); // uses defaults unless given configuration object
-const redis = new Redis(32089); // uses defaults unless given configuration object
+const redis = new Redis(30977); // uses defaults unless given configuration object
 
 const MAX_NOTIFIES_AT_ONCE = 200;
 
