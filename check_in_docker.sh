@@ -7,7 +7,7 @@ while [ $ret -eq 0 ]; do
 	echo "Killing zombie containers $ret"
 done
 
-docker run -it --rm \
+docker run --rm \
 	--ipc=host \
 	--user pwuser \
 	--security-opt seccomp=seccomp_profile.json \
@@ -19,6 +19,7 @@ docker run -it --rm \
 	-v $PWD/index-rstore.js:/usr/src/app/index-rstore.js \
 	-v $PWD/index-suumo.js:/usr/src/app/index-suumo.js \
 	-v $PWD/setting.js:/usr/src/app/setting.js \
+	-v $PWD/utils.js:/usr/src/app/utils.js \
 	--env LINE_NOTIFY_TOKEN=$LINE_NOTIFY_TOKEN \
-	nekia/rent-env:1.0.0 \
+	nekia/rent-env:1.0.1 \
 	node $1
