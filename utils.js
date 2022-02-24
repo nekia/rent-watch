@@ -72,6 +72,7 @@ meetCondition = (detailObj) => {
     console.log('Too low floor level!', detailObj.floorLevel.floorLevel)
     return false;
   }
+  console.log('Meet the condition !!!')
   return true
 }
 module.exports = {
