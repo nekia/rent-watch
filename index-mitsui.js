@@ -7,7 +7,7 @@ const Suumo = require('./index-suumo')
 const RStore = require('./index-rstore')
 
 //const redis = new Redis(); // uses defaults unless given configuration object
-const redis = new Redis(30977); // uses defaults unless given configuration object
+const redis = new Redis('192.168.2.132', 31951); // uses defaults unless given configuration object
 
 const MAX_ROOM_PRICE = 220000;
 const MIN_ROOM_SIZE = 57;
@@ -126,7 +126,7 @@ pagenation = async (page) => {
 
 (async () => {
   // const browser = await playwright['chromium'].launch({ headless: false });
-  const browser = await playwright['chromium'].launch({ executablePath: '/usr/bin/chromium-browser', headless: true });
+  const browser = await playwright['chromium'].launch({ headless: true });
   const context = await utils.getNewContext(browser);
   let page = await context.newPage();
 
