@@ -4,7 +4,7 @@ const Redis = require("ioredis");
 const utils = require('./utils')
 
 // const redis = new Redis(); // uses defaults unless given configuration object
-const redis = new Redis(30977); // uses defaults unless given configuration object
+const redis = new Redis('192.168.2.132', 31951); // uses defaults unless given configuration object
 
 const MAX_ROOM_PRICE = 220000;
 const MIN_ROOM_SIZE = 57;
@@ -19,7 +19,7 @@ const MAX_NOTIFIES_AT_ONCE = 200;
 // 駅徒歩分数: 15分以内
 // 築年数: 20年以内
 // こだわり: 2階以上/南向き/定期借家を含まない
-const checkUrl = 'https://www.linea.co.jp/article/list/type/rent?url=&pre=area&search=&area%5B%5D=1&area%5B%5D=2&area%5B%5D=3&area%5B%5D=4&area%5B%5D=6';
+const checkUrl = 'https://www.linea.co.jp/article/list/type/rent?pre2=1&pmi=10&pma=16&smi=6&sma=&req=&bye=4&name=';
 
 scanRoomDetail = async (context, address) => {
   const roomPage = await context.newPage();
@@ -67,7 +67,6 @@ scanRoom = async (context, address) => {
             detailObj.floorLevel.floorLevel != detailObj.floorLevel.floorTopLevel &&
             detailObj.floorLevel.floorLevel >= MIN_FLOOR_LEVEL ) {
           notifys.push(detailObj)
-          console.log(pathAddress, key)
         } else {
           console.log('Too expensive and/or small', key)
         }
@@ -158,8 +157,8 @@ pagenation = async (page) => {
 }
 
 (async () => {
-  // const browser = await playwright['chromium'].launch({ headless: false });
-  const browser = await playwright['chromium'].launch({ executablePath: '/usr/bin/chromium-browser', headless: true });
+  const browser = await playwright['chromium'].launch({ headless: true });
+  // const browser = await playwright['chromium'].launch({ executablePath: '/usr/bin/chromium-browser', headless: true });
   const context = await utils.getNewContext(browser);
   let page = await context.newPage();
 
