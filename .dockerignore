@@ -2,3 +2,4 @@ node_modules/
 backup/
 *.sh
 docker-compose.yaml
+package-lock.json
