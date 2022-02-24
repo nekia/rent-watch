@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/playwright:v1.16.3-focal-arm64
+FROM mcr.microsoft.com/playwright:v1.16.3
 
 COPY . /usr/src/app/
 

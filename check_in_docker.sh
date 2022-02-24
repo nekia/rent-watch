@@ -11,6 +11,14 @@ docker run -it --rm \
 	--ipc=host \
 	--user pwuser \
 	--security-opt seccomp=seccomp_profile.json \
-	-v $PWD/$1:/usr/src/app/index-linea.js \
+	-v $PWD/index-linea.js:/usr/src/app/index-linea.js \
+	-v $PWD/index-homes.js:/usr/src/app/index-homes.js \
+	-v $PWD/index-main.js:/usr/src/app/index-main.js \
+	-v $PWD/index-mitsui.js:/usr/src/app/index-mitsui.js \
+	-v $PWD/index-rnet.js:/usr/src/app/index-rnet.js \
+	-v $PWD/index-rstore.js:/usr/src/app/index-rstore.js \
+	-v $PWD/index-suumo.js:/usr/src/app/index-suumo.js \
+	-v $PWD/setting.js:/usr/src/app/setting.js \
 	--env LINE_NOTIFY_TOKEN=$LINE_NOTIFY_TOKEN \
-	nekia/rent-env:1.0.0
+	nekia/rent-env:1.0.0 \
+	node $1
