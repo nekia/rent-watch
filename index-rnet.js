@@ -7,12 +7,12 @@ const setting = require('./setting')
 // const redis = new Redis(); // uses defaults unless given configuration object
 const redis = new Redis('192.168.2.132', 31951); // uses defaults unless given configuration object
 
-// エリア: 千代田区/新宿区/文京区/目黒区/世田谷区/渋谷区/中野区/杉並区/豊島区/港区
+// エリア: 千代田区/新宿区/文京区/目黒区/世田谷区/渋谷区/中野区/杉並区/豊島区/港区/板橋区/練馬区
 // エリア: 東京都下
 // 賃料: 15 - 25
 // 専有面積: 50 -
-// 駅徒歩分数: 15分以内
-// 築年数: 20年以内
+// 駅徒歩分数: 未指定
+// 築年数: 未指定
 // こだわり: 2階以上/南向き/定期借家を含まない
 const checkUrl = 'https://www.rnt.co.jp/search/address/';
 
@@ -161,6 +161,8 @@ selectKodawari = async (page, label) => {
   await selectWard(page, "中野区")
   await selectWard(page, "杉並区")
   await selectWard(page, "豊島区")
+  await selectWard(page, "板橋区")
+  await selectWard(page, "練馬区")
   await selectWard(page, "港区")
 
   await page.$('//select[contains(@id, "SearchPriceMin")]')

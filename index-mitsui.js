@@ -10,14 +10,14 @@ const setting = require('./setting')
 //const redis = new Redis(); // uses defaults unless given configuration object
 const redis = new Redis('192.168.2.132', 31951); // uses defaults unless given configuration object
 
-// エリア: 千代田区/新宿区/文京区/目黒区/世田谷区/渋谷区/中野区/杉並区/豊島区/港区
+// エリア: 港区/渋谷区/新宿区/文京区/千代田区/目黒区/世田谷区/杉並区/中野区/豊島区/練馬区/板橋区
 // エリア: 東京都下
 // 賃料: 15 - 25
 // 専有面積: 50 -
-// 駅徒歩分数: 15分以内
-// 築年数: 20年以内
+// 駅徒歩分数: 未指定
+// 築年数: 未指定
 // こだわり: 2階以上/南向き/定期借家を含まない
-const checkUrl = 'https://www.mitsui-chintai.co.jp/rf/result?ku=(1,22),(1,10),(1,11),(1,21),(1,23),(1,14),(1,12),(1,19),(1,18)&kn=2&res=150&reb=250&ms=(50,0)&tim=15&cpl=20&dir=3&flo=2&cms=1dvxwqtyww&get=ward';
+const checkUrl = 'https://www.mitsui-chintai.co.jp/rf/result?ku=(1,22),(1,10),(1,11),(1,21),(1,23),(1,14),(1,12),(1,19),(1,18),(1,20),(1,3)&kn=2&res=150&reb=250&ms=(50,0)&dir=3&flo=2&cms=1dvxwqtyww&get=ward';
 
 
 scanRoomDetail = async (context, address) => {
