@@ -5,11 +5,10 @@ const utils = require('./utils')
 const Homes = require('./index-homes')
 const Suumo = require('./index-suumo')
 const RStore = require('./index-rstore')
+const setting = require('./setting')
 
 // const redis = new Redis(); // uses defaults unless given configuration object
 const redis = new Redis('192.168.2.132', 31951); // uses defaults unless given configuration object
-
-const MAX_NOTIFIES_AT_ONCE = 200;
 
 (async () => {
   // const browser = await playwright['chromium'].launch({ headless: false });
@@ -40,7 +39,7 @@ const MAX_NOTIFIES_AT_ONCE = 200;
       }
     }
   
-    for ( let i = 0; i < notifyRooms.length && i < MAX_NOTIFIES_AT_ONCE; i++ ) {
+    for ( let i = 0; i < notifyRooms.length && i < setting.MAX_NOTIFIES_AT_ONCE; i++ ) {
       const key = utils.createKeyFromDetail(notifyRooms[i])
       if (!await redis.exists(key)) {
         await utils.notifyLine(notifyRooms[i])

@@ -1,5 +1,6 @@
 const querystring = require('querystring');
 const axios = require('axios');
+const setting = require('./setting')
 
 const BASE_URL = 'https://notify-api.line.me';
 const PATH = '/api/notify';
@@ -19,11 +20,15 @@ const config = {
 };
 
 notifyLine = async (roomObj) => {
-  console.log(`New room !!`, roomObj.address)
-  config.data = querystring.stringify({
-    message: `${roomObj.price}万円  ${roomObj.size}平米  ${roomObj.floorLevel.floorLevel}/${roomObj.floorLevel.floorTopLevel}\n${roomObj.location}\n${roomObj.address}`,
-  })
-  const response = await axios.request(config);
+  if (setting.ENABLE_NOTIFY) {
+    console.log(`New room !!`, roomObj.address)
+    config.data = querystring.stringify({
+      message: `${roomObj.price}万円  ${roomObj.size}平米  ${roomObj.floorLevel.floorLevel}/${roomObj.floorLevel.floorTopLevel}\n${roomObj.location}\n${roomObj.address}`,
+    })
+    const response = await axios.request(config);
+  } else {
+    console.log(`New room !! But disable notification to LINE`, roomObj.address)
+  }
 }
 
 getNewContext = async (browser) => {
@@ -47,8 +52,31 @@ createKeyFromDetail = (detailObj) => {
   return key
 }
 
+meetCondition = (detailObj) => {
+  if (detailObj.price > setting.MAX_ROOM_PRICE) {
+    console.log('Too expensive!', detailObj.price)
+    return false;
+  }
+
+  if (detailObj.size < setting.MIN_ROOM_SIZE) {
+    console.log('Too small!', detailObj.size)
+    return false;
+  }
+
+  if (detailObj.floorLevel.floorLevel == detailObj.floorLevel.floorTopLevel) {
+    console.log(`Top floor! ${detailObj.floorLevel.floorLevel}/${detailObj.floorLevel.floorTopLevel}`)
+    return false;
+  }
+
+  if (detailObj.floorLevel.floorLevel < setting.MIN_FLOOR_LEVEL ) {
+    console.log('Too low floor level!', detailObj.floorLevel.floorLevel)
+    return false;
+  }
+  return false
+}
 module.exports = {
 	notifyLine,
   getNewContext,
-  createKeyFromDetail
+  createKeyFromDetail,
+  meetCondition
 };

@@ -2,15 +2,10 @@ const playwright = require('playwright');
 const Redis = require("ioredis");
 
 const utils = require('./utils')
+const setting = require('./setting')
 
 // const redis = new Redis(); // uses defaults unless given configuration object
 const redis = new Redis('192.168.2.132', 31951); // uses defaults unless given configuration object
-
-const MAX_ROOM_PRICE = 220000;
-const MIN_ROOM_SIZE = 57;
-const MIN_FLOOR_LEVEL = 2;
-
-const MAX_NOTIFIES_AT_ONCE = 200;
 
 // エリア: 千代田区/新宿区/文京区/目黒区/世田谷区/渋谷区/中野区/杉並区/豊島区/港区
 // エリア: 東京都下
@@ -27,7 +22,7 @@ scanRoomDetail = async (context, address) => {
   try {
     await roomPage.goto(address);
     await roomPage.waitForTimeout(1000)
-    price = await getPriceInt(roomPage)
+    price = await getPriceFloat(roomPage)
     size = await getSizeFloat(roomPage)
     floorLevel = await getFloorLevel(roomPage)
     location = await getLocation(roomPage)
@@ -62,13 +57,10 @@ scanRoom = async (context, address) => {
       }
       const key = utils.createKeyFromDetail(detailObj)
       if (!await redis.exists(key)) {
-        if (detailObj.price <= MAX_ROOM_PRICE &&
-            detailObj.size >= MIN_ROOM_SIZE &&
-            detailObj.floorLevel.floorLevel != detailObj.floorLevel.floorTopLevel &&
-            detailObj.floorLevel.floorLevel >= MIN_FLOOR_LEVEL ) {
+        if (utils.meetCondition(detailObj)) {
           notifys.push(detailObj)
         } else {
-          console.log('Too expensive and/or small', key)
+          console.log('Doesn\'t meet the condition', key)
         }
       } else {
         console.log('Already notified', key)
@@ -83,11 +75,11 @@ scanRoom = async (context, address) => {
   return notifys
 };
 
-getPriceInt = async (page) => {
+getPriceFloat = async (page) => {
   const priceStr = await page.$('//ul[contains(@class, "room-main-floor-list")]/li[text()[contains(., "賃料")]]')
     .then( elm => elm.innerText())
     .then( str => str.match(/([\d,]+)円/) )
-  return parseInt(priceStr[1].replace(/,/g, ''))
+  return parseInt(priceStr[1].replace(/,/g, ''))/10000
 }
 
 getSizeFloat = async (page) => {
@@ -182,7 +174,7 @@ pagenation = async (page) => {
     await page.waitForTimeout(5000)
   }
 
-  for ( let i = 0; i < notifyRooms.length && i < MAX_NOTIFIES_AT_ONCE; i++ ) {
+  for ( let i = 0; i < notifyRooms.length && i < setting.MAX_NOTIFIES_AT_ONCE; i++ ) {
     const key = utils.createKeyFromDetail(notifyRooms[i])
     if (!await redis.exists(key)) {
       await utils.notifyLine(notifyRooms[i])

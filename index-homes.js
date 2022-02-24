@@ -1,9 +1,5 @@
 const utils = require('./utils')
 
-const MAX_ROOM_PRICE = 22;
-const MIN_ROOM_SIZE = 57;
-const MIN_FLOOR_LEVEL = 2;
-
 // エリア: 千代田区/新宿区/文京区/目黒区/世田谷区/渋谷区/中野区/杉並区/豊島区
 // エリア: 武蔵野市/三鷹市/小金井市/国分寺市
 // 賃料: 15 - 30
@@ -81,14 +77,11 @@ module.exports = class Homes {
       }
       const key = utils.createKeyFromDetail(detailObj)
       if (!await this.redis.exists(key)) {
-        if (detailObj.price <= MAX_ROOM_PRICE &&
-            detailObj.size >= MIN_ROOM_SIZE &&
-            detailObj.floorLevel.floorLevel != detailObj.floorLevel.floorTopLevel &&
-            detailObj.floorLevel.floorLevel >= MIN_FLOOR_LEVEL ) {
+        if (utils.meetCondition(detailObj)) {
           notifys.push(detailObj)
           console.log(address, key)
         } else {
-          console.log('Too expensive and/or small', key)
+          console.log('Doesn\'t meet the condition', key)
         }
       } else {
         console.log('Already notified', key)

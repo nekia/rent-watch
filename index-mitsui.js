@@ -5,15 +5,10 @@ const utils = require('./utils')
 const Homes = require('./index-homes')
 const Suumo = require('./index-suumo')
 const RStore = require('./index-rstore')
+const setting = require('./setting')
 
 //const redis = new Redis(); // uses defaults unless given configuration object
 const redis = new Redis('192.168.2.132', 31951); // uses defaults unless given configuration object
-
-const MAX_ROOM_PRICE = 220000;
-const MIN_ROOM_SIZE = 57;
-const MIN_FLOOR_LEVEL = 2;
-
-const MAX_NOTIFIES_AT_ONCE = 200;
 
 // エリア: 千代田区/新宿区/文京区/目黒区/世田谷区/渋谷区/中野区/杉並区/豊島区/港区
 // エリア: 東京都下
@@ -31,7 +26,7 @@ scanRoomDetail = async (context, address) => {
   try {
     await roomPage.goto(address);
     await roomPage.waitForTimeout(1000)
-    price = await getPriceInt(roomPage)
+    price = await getPriceFloat(roomPage)
     size = await getSizeFloat(roomPage)
     floorLevel = await getFloorLevel(roomPage)
     location = await getLocation(roomPage)
@@ -44,10 +39,10 @@ scanRoomDetail = async (context, address) => {
   return { address, price, size, floorLevel, location }
 };
 
-getPriceInt = async (page) => {
+getPriceFloat = async (page) => {
   const priceStr = await page.$('//ul[contains(@class, "tblBCmn") and contains(@class, "listRoom")]//li[contains(@class, "rent")]').then((elm) => elm.innerText())
   const priceNoUnit = priceStr.match(/[\d,]+/);
-  return parseInt(priceNoUnit[0].replace(/,/g, ''))
+  return parseInt(priceNoUnit[0].replace(/,/g, ''))/10000
 }
 
 getSizeFloat = async (page) => {
@@ -94,14 +89,11 @@ scanRoom = async (context, page) => {
     }
     const key = utils.createKeyFromDetail(detailObj)
     if (!await redis.exists(key)) {
-      if (detailObj.price <= MAX_ROOM_PRICE &&
-          detailObj.size >= MIN_ROOM_SIZE &&
-          detailObj.floorLevel.floorLevel != detailObj.floorLevel.floorTopLevel &&
-          detailObj.floorLevel.floorLevel >= MIN_FLOOR_LEVEL ) {
+      if (utils.meetCondition(detailObj)) {
         notifys.push(detailObj)
         console.log(pathAddress, key)
       } else {
-        console.log('Too expensive and/or small', key)
+        console.log('Doesn\'t meet the condition', key)
       }
     } else {
       console.log('Already notified', key)
@@ -151,7 +143,7 @@ pagenation = async (page) => {
     }
   }
 
-  for ( let i = 0; i < notifyRooms.length && i < MAX_NOTIFIES_AT_ONCE; i++ ) {
+  for ( let i = 0; i < notifyRooms.length && i < setting.MAX_NOTIFIES_AT_ONCE; i++ ) {
     const key = utils.createKeyFromDetail(notifyRooms[i])
     if (!await redis.exists(key)) {
       await utils.notifyLine(notifyRooms[i])
