@@ -7,6 +7,9 @@ while [ $ret -eq 0 ]; do
 	echo "Killing zombie containers $ret"
 done
 
+killall -9 chrome
+echo "Killing zombie process (chrome)"
+
 docker run --rm \
 	--ipc=host \
 	--user pwuser \
