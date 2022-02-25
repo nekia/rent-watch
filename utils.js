@@ -36,7 +36,7 @@ getNewContext = async (browser) => {
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4595.0 Safari/537.36',
     ignoreHTTPSErrors: true
   });
-  await ctx.setDefaultNavigationTimeout(60000);
+  await ctx.setDefaultTimeout(60000)
   return ctx;
 }
 

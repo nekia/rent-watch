@@ -136,15 +136,20 @@ scanBuilding = async (context, page) => {
 };
 
 pagenation = async (page) => {
-  const nextPageBtn = await page.$('//div[contains(@class, "pager")]/a[contains(@class, "page") and contains(@class, "is-current")]/following-sibling::a[contains(@class, "page")]')
-  if (!nextPageBtn) {
-    console.log('End of pages')
-    return { nextPageExist: false, nextPage: page };
-  } else {
-    console.log('Next page')
-    await nextPageBtn.click()
-    await page.waitForTimeout(5000)
-    return { nextPageExist: true, nextPage: page };
+  try {
+    const nextPageBtn = await page.$('//div[contains(@class, "pager")]/a[contains(@class, "page") and contains(@class, "is-current")]/following-sibling::a[contains(@class, "page")]')
+    if (!nextPageBtn) {
+      console.log('End of pages')
+      return { nextPageExist: false, nextPage: page };
+    } else {
+      console.log('Next page')
+      await nextPageBtn.click()
+      await page.waitForTimeout(5000)
+      return { nextPageExist: true, nextPage: page };
+    }
+  } catch (error) {
+    console.error('Failed to pagenate', error)
+    return { nextPageExist: false, nextPage: undefined }
   }
 }
 

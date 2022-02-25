@@ -104,15 +104,20 @@ scanRoom = async (context, page) => {
 };
 
 pagenation = async (page) => {
-  const nextPageBtn = await page.$('//ul[@class="pagination"]/li/a[contains(text(), "»")]');
-  if (!nextPageBtn) {
-    console.log('End of pages')
-    return { nextPageExist: false, nextPage: page };
-  } else {
-    console.log('Next page')
-    await nextPageBtn.click()
-    await page.waitForTimeout(5000)
-    return { nextPageExist: true, nextPage: page };
+  try {
+    const nextPageBtn = await page.$('//ul[@class="pagination"]/li/a[contains(text(), "»")]');
+    if (!nextPageBtn) {
+      console.log('End of pages')
+      return { nextPageExist: false, nextPage: page };
+    } else {
+      console.log('Next page')
+      await nextPageBtn.click()
+      await page.waitForTimeout(5000)
+      return { nextPageExist: true, nextPage: page };
+    }
+  } catch (error) {
+    console.error('Failed to pagenate', error)
+    return { nextPageExist: false, nextPage: undefined }
   }
 }
 

@@ -22,16 +22,21 @@ module.exports = class Homes {
   }
   
   pagenation = async (page) => {
-    const nextPageBtns = await page.$$('//div[@class="pagination-mediumController"]');
-    const existNextPage = await nextPageBtns[1].$('//a')
-    if (!existNextPage) {
-      console.log('End of pages')
-      return { nextPageExist: false, nextPage: page };
-    } else {
-      console.log('Next page')
-      await existNextPage.click()
-      await page.waitForTimeout(5000)
-      return { nextPageExist: true, nextPage: page };
+    try {
+      const nextPageBtns = await page.$$('//div[@class="pagination-mediumController"]');
+      const existNextPage = await nextPageBtns[1].$('//a')
+      if (!existNextPage) {
+        console.log('End of pages')
+        return { nextPageExist: false, nextPage: page };
+      } else {
+        console.log('Next page')
+        await existNextPage.click()
+        await page.waitForTimeout(5000)
+        return { nextPageExist: true, nextPage: page };
+      }
+    } catch (error) {
+      console.error('Failed to pagenate', error)
+      return { nextPageExist: false, nextPage: undefined }
     }
   }
   

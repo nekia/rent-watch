@@ -22,15 +22,20 @@ module.exports = class Rstore {
   }
 
   pagenation = async (page) => {
-    const nextPageAnchor = await page.$('//li[@class="page-nav-next"]/a');
-    if (!nextPageAnchor) {
-      console.log('End of pages')
-      return { nextPageExist: false, nextPage: page };
-    } else {
-      console.log('Next page')
-      await nextPageAnchor.click()
-      await page.waitForTimeout(5000)
-      return { nextPageExist: true, nextPage: page };
+    try {
+      const nextPageAnchor = await page.$('//li[@class="page-nav-next"]/a');
+      if (!nextPageAnchor) {
+        console.log('End of pages')
+        return { nextPageExist: false, nextPage: page };
+      } else {
+        console.log('Next page')
+        await nextPageAnchor.click()
+        await page.waitForTimeout(5000)
+        return { nextPageExist: true, nextPage: page };
+      }
+    } catch (error) {
+      console.error('Failed to pagenate', error)
+      return { nextPageExist: false, nextPage: undefined }
     }
   }
 

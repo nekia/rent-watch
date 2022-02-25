@@ -23,15 +23,20 @@ module.exports = class Suumo {
   }
 
   pagenation = async (page) => {
-    const nextPageBtn = await page.$('//p[@class="pagination-parts"]/a[contains(text(), "次へ")]');
-    if (!nextPageBtn) {
-      console.log('End of pages')
-      return { nextPageExist: false, nextPage: page };
-    } else {
-      console.log('Next page')
-      await nextPageBtn.click()
-      await page.waitForTimeout(5000)
-      return { nextPageExist: true, nextPage: page };
+    try {
+      const nextPageBtn = await page.$('//p[@class="pagination-parts"]/a[contains(text(), "次へ")]');
+      if (!nextPageBtn) {
+        console.log('End of pages')
+        return { nextPageExist: false, nextPage: page };
+      } else {
+        console.log('Next page')
+        await nextPageBtn.click()
+        await page.waitForTimeout(5000)
+        return { nextPageExist: true, nextPage: page };
+      }
+    } catch (error) {
+      console.error('Failed to pagenate', error)
+      return { nextPageExist: false, nextPage: undefined }
     }
   }
 
