@@ -11,8 +11,7 @@ const utils = require('./utils')
 const checkUrl = 'https://www.homes.co.jp/chintai/imayori/list/?sortBy=%24imayori%3Awantmcf&prefectureId=13&cityIds=13101%2C13104%2C13105%2C13110%2C13112%2C13113%2C13114%2C13115%2C13116%2C13203%2C13204%2C13210%2C13214%2C13120%2C13103%2C13119&monthMoneyRoom=15&monthMoneyRoomHigh=30&houseArea=50&walkMinutes=0&houseAgeHigh=0&newDate=1&mcfs=340102%2C340501&needsCodes=5';
 
 module.exports = class Homes {
-  constructor(browser, context, redis) {
-    this.redis = redis;
+  constructor(browser, context) {
     this.browser = browser;
     this.context = context;
   }
@@ -41,7 +40,6 @@ module.exports = class Homes {
   }
   
   scanRoomDetail = async (address) => {
-    console.log(address)
     const context = await utils.getNewContext(this.browser);
     const roomPage = await context.newPage();
     let price = 0.0, size = 0.0, floorLevel = {}, location = "";
@@ -52,7 +50,6 @@ module.exports = class Homes {
       size = await this.getSizeFloat(roomPage)
       floorLevel = await this.getFloorLevel(roomPage)
       location = await this.getLocation(roomPage)
-      console.log(price, size, floorLevel, location)
     } catch (error) {
       console.warn('## Failed to retrieve the detail ##', address, error)
     } finally {
@@ -72,25 +69,18 @@ module.exports = class Homes {
     for (let i = 0; i < roomLinks.length; i++ ) {
       const link = roomLinks[i]
       const address = await link.getAttribute("href");
-      if (await this.redis.exists(address)) {
-        console.log('Already notified', address)
+      if (await utils.checkCacheByUrl(address)) {
         continue
       }
       const detailObj = await this.scanRoomDetail(address)
       if (detailObj.location.length == 0) {
         continue
       }
-      const key = utils.createKeyFromDetail(detailObj)
-      if (!await this.redis.exists(key)) {
-        if (await utils.meetCondition(detailObj)) {
-          notifys.push(detailObj)
-          console.log(address, key)
-        } else {
-          console.log('Doesn\'t meet the condition', key)
-        }
+
+      if (await utils.meetCondition(detailObj)) {
+        notifys.push(detailObj)
       } else {
-        console.log('Already notified', key)
-        await this.redis.set(detailObj.address, 1)
+        await utils.addCache(detailObj, utils.CACHE_KEY_VAL_INSPECTED)
       }
     }
     return notifys;

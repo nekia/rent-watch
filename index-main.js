@@ -10,10 +10,10 @@ const setting = require('./setting');
   // const browser = await playwright['chromium'].launch({ headless: false });
   const browser = await playwright['chromium'].launch({ headless: true });
   const context = await utils.getNewContext(browser);
-  // const homesSite = new Homes(browser, context, redis)
-  const suumoSite = new Suumo(browser, context)
-  // const rstoreSite = new RStore(browser, context, redis)
-  const searchingSites =  [suumoSite];
+  const homesSite = new Homes(browser, context)
+  // const suumoSite = new Suumo(browser, context)
+  // const rstoreSite = new RStore(browser, context)
+  const searchingSites =  [homesSite];
   // const searchingSites =  [homesSite, suumoSite, rstoreSite];
   let page = await context.newPage();
 
