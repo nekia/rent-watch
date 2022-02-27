@@ -77,13 +77,10 @@ scanRoom = async (context, page) => {
     if (detailObj.location.length == 0) {
       continue;
     }
-    const key = utils.createKeyFromDetail(detailObj)
-    if (!await utils.checkCacheByKey(key)) {
-      if (await utils.meetCondition(detailObj)) {
-        notifys.push(detailObj)
-      } else {
-        await utils.addCache(detailObj, utils.CACHE_KEY_VAL_INSPECTED)
-      }
+    if (await utils.meetCondition(detailObj)) {
+      notifys.push(detailObj)
+    } else {
+      await utils.addCache(detailObj, utils.CACHE_KEY_VAL_INSPECTED)
     }
   }
   return notifys;
@@ -138,8 +135,8 @@ pagenation = async (page) => {
     if (!await utils.checkCacheByKey(key)) {
       await utils.notifyLine(notifyRooms[i])
       console.log('Notified (Paased redundant check)', key)
-      await utils.addCache(notifyRooms[i], utils.CACHE_KEY_VAL_NOTIFIED)
     }
+    await utils.addCache(notifyRooms[i], utils.CACHE_KEY_VAL_NOTIFIED)
   }
   console.log(`##### Done - Mitsui`);
 

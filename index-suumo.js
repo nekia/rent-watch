@@ -12,8 +12,7 @@ const utils = require('./utils')
 const checkUrl = 'https://suumo.jp/jj/chintai/ichiran/FR301FC001/?ar=030&bs=040&fw2=&pc=30&po1=25&po2=99&ta=13&sc=13101&sc=13103&sc=13104&sc=13105&sc=13113&sc=13110&sc=13112&sc=13114&sc=13115&sc=13120&sc=13116&sc=13119&sc=13204&sc=13210&cb=15.0&ct=25.0&et=9999999&mb=55&mt=9999999&cn=9999999&tc=0401303&tc=0400101&tc=0400104&tc=0401106&shkr1=03&shkr2=03&shkr3=03&shkr4=03';
 
 module.exports = class Suumo {
-  constructor(browser, context, redis) {
-    this.redis = redis;
+  constructor(browser, context) {
     this.browser = browser;
     this.context = context;
   }
@@ -50,7 +49,6 @@ module.exports = class Suumo {
       size = await this.getSizeFloat(roomPage)
       floorLevel = await this.getFloorLevel(roomPage)
       location = await this.getLocation(roomPage)
-      console.log(price, size, floorLevel, location)
     } catch (error) {
       console.warn('## Failed to retrieve the detail ##', address, error)
     } finally {
@@ -69,25 +67,18 @@ module.exports = class Suumo {
       const link = roomLinks[i];
       const pathAddress = await link.getAttribute("href");
       const address = `https://suumo.jp${pathAddress}`;
-      if (await this.redis.exists(address)) {
-        console.log('Already notified', address)
+      if (await utils.checkCacheByUrl(address)) {
         continue
       }
       const detailObj = await this.scanRoomDetail(address)
       if (detailObj.location.length == 0) {
         continue;
       }
-      const key = utils.createKeyFromDetail(detailObj)
-      if (!await this.redis.exists(key)) {
-        if (await utils.meetCondition(detailObj) ) {
-          notifys.push(detailObj)
-          console.log(address, key)
-        } else {
-          console.log('Doesn\'t meet the condition', key)
-        }
+      
+      if (await utils.meetCondition(detailObj) ) {
+        notifys.push(detailObj)
       } else {
-        console.log('Already notified', key)
-        await this.redis.set(detailObj.address, 1)
+        await utils.addCache(detailObj, utils.CACHE_KEY_VAL_INSPECTED)
       }
     }
     return notifys;

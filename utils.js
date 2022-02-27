@@ -1,7 +1,7 @@
 const querystring = require('querystring');
 const axios = require('axios');
 const Redis = require("ioredis");
-const setting = require('./setting')
+const setting = require('./setting');
 
 const BASE_URL = 'https://notify-api.line.me';
 const PATH = '/api/notify';
@@ -91,7 +91,8 @@ meetCondition = async (detailObj) => {
 checkCacheByUrl = async (url) => {
   if (!setting.IGNORE_INSPECTED_CACHE) {
     val = await redis.get(url)
-    if (val == null) {
+    if (val === '0' || val === '' || val == null) {
+      console.log('Not checked yet', url)
       return false
     } else {
       console.log('Already cached', val === CACHE_KEY_VAL_INSPECTED ? 'INSPECTED' : 'NOTIFIED', url)
@@ -100,8 +101,9 @@ checkCacheByUrl = async (url) => {
   }
 
   val = await redis.get(url)
-  if (val == null || val === CACHE_KEY_VAL_INSPECTED) {
-    return false
+  if (val === '0' || val === "" || val == null || val === CACHE_KEY_VAL_INSPECTED) {
+      console.log('Not notified yet', url)
+      return false
   } else {
     console.log('Already cached', 'NOTIFIED', url)
     return true
@@ -111,7 +113,8 @@ checkCacheByUrl = async (url) => {
 checkCacheByKey = async (key) => {
   if (!setting.IGNORE_INSPECTED_CACHE) {
     val = await redis.exists(key)
-    if (val == null) {
+    if (val === '0' || val === '' || val == null) {
+      console.log('Not checked yet', key)
       return false
     } else {
       console.log('Already cached', val === CACHE_KEY_VAL_INSPECTED ? 'INSPECTED' : 'NOTIFIED', key)
@@ -120,7 +123,8 @@ checkCacheByKey = async (key) => {
   }
 
   val = await redis.get(key)
-  if (val == null || val === CACHE_KEY_VAL_INSPECTED) {
+  if (val === '0' || val === "" || val == null || val === CACHE_KEY_VAL_INSPECTED) {
+    console.log('Not notified yet', key)
     return false
   } else {
     console.log('Already cached', 'NOTIFIED', key)
