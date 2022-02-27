@@ -137,7 +137,7 @@ selectKodawari = async (page, label) => {
     // const browser = await playwright['chromium'].launch({ headless: false });
     const browser = await playwright['chromium'].launch({ headless: true });
     const context = await utils.getNewContext(browser);
-    let page = await context.newPage();
+    let page = await utils.getNewPage(context);
 
     let notifyRooms = [];
     console.log(`##### Start - R-Net`);
@@ -178,6 +178,12 @@ selectKodawari = async (page, label) => {
       const rooms = await scanBuilding(context, page)
 
       notifyRooms.push(...rooms)
+
+      if (utils.getNewPageCount() > setting.MAX_NEW_PAGE_COUNT) {
+        console.log('Reached max new page count', utils.getNewPageCount())
+        break
+      }
+
       // Pagenation
       const { nextPageExist,  nextPage } = await pagenation(page)
       if (!nextPageExist) {

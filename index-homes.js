@@ -41,7 +41,7 @@ module.exports = class Homes {
   
   scanRoomDetail = async (address) => {
     const context = await utils.getNewContext(this.browser);
-    const roomPage = await context.newPage();
+    const roomPage = await utils.getNewPage(context);
     let price = 0.0, size = 0.0, floorLevel = {}, location = "";
     try {
       await roomPage.goto(address);

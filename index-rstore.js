@@ -39,7 +39,7 @@ module.exports = class Rstore {
   }
 
   scanRoomDetail = async (address) => {
-    const roomPage = await this.context.newPage();
+    const roomPage = await utils.getNewPage(this.context);
     let price = 0, size = 0.0, floorLevel = {}, location = "";
     try {
       await roomPage.goto(address)

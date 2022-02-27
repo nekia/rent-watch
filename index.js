@@ -66,7 +66,7 @@ const config = {
   //const browser = await playwright['chromium'].launch();
   const browser = await playwright['chromium'].launch({ executablePath: '/usr/bin/chromium-browser', headless: true });
   const context = await browser.newContext();
-  const page = await context.newPage();
+  const page = await utils.getNewPage(context);
   await page.goto(checkUrl);
   const rooms = await page.$$('.room-number');
   for (let room of rooms) {

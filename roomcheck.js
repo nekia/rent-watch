@@ -5,7 +5,7 @@ const checkUrl = 'https://www.linea.co.jp/article/room/type/rent/id/304/rid';
   const browser = await playwright['chromium'].launch();
   const context = await browser.newContext();
   for ( let roomNum = 2080; roomNum < 2090; roomNum++ ) {
-    const page = await context.newPage();
+    const page = await utils.getNewPage(context);
     await page.goto(`${checkUrl}/${roomNum}`);
     await page.screenshot({ path: `room-${roomNum}.png` });
     await page.close();

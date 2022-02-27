@@ -26,6 +26,8 @@ const config = {
   })
 };
 
+let newPageCount = 0;
+
 notifyLine = async (roomObj) => {
   if (setting.ENABLE_NOTIFY) {
     console.log(`New room !!`, roomObj.address)
@@ -46,6 +48,13 @@ getNewContext = async (browser) => {
   await ctx.setDefaultTimeout(60000)
   return ctx;
 }
+
+getNewPage = async (context) => {
+  newPageCount++
+  return context.newPage()
+}
+
+getNewPageCount = () => { return newPageCount }
 
 createKeyFromDetail = (detailObj) => {
   const key = [
@@ -154,6 +163,8 @@ disconnectCache = async () => { await redis.disconnect()}
 module.exports = {
 	notifyLine,
   getNewContext,
+  getNewPage,
+  getNewPageCount,
   createKeyFromDetail,
   meetCondition,
   checkCacheByUrl,

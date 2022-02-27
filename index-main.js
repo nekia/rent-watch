@@ -14,7 +14,8 @@ const setting = require('./setting');
   const suumoSite = new Suumo(browser, context)
   const rstoreSite = new RStore(browser, context)
   const searchingSites =  [homesSite, suumoSite, rstoreSite];
-  let page = await context.newPage();
+
+  let page = await utils.getNewPage(context);
 
   await page.waitForTimeout(5000)
 
@@ -27,6 +28,12 @@ const setting = require('./setting');
   
       // Pagenation
       notifyRooms.push(...rooms)
+
+      if (utils.getNewPageCount() > setting.MAX_NEW_PAGE_COUNT) {
+        console.log('Reached max new page count', utils.getNewPageCount())
+        break
+      }
+      
       const { nextPageExist,  nextPage } = await site.pagenation(page)
       if (!nextPageExist) {
         break;

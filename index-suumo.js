@@ -40,7 +40,7 @@ module.exports = class Suumo {
   }
 
   scanRoomDetail = async (address) => {
-    const roomPage = await this.context.newPage();
+    const roomPage = await utils.getNewPage(this.context);
     let price = 0.0, size = 0.0, floorLevel = {}, location = "";
     try {
       await roomPage.goto(address);

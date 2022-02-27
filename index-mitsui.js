@@ -14,7 +14,7 @@ const checkUrl = 'https://www.mitsui-chintai.co.jp/rf/result?ku=(1,22),(1,10),(1
 
 
 scanRoomDetail = async (context, address) => {
-  const roomPage = await context.newPage();
+  const roomPage = await utils.getNewPage(context);
   let price = 0.0, size = 0.0, floorLevel = {}, location = "";
   try {
     await roomPage.goto(address);
@@ -108,7 +108,7 @@ pagenation = async (page) => {
 (async () => {
   const browser = await playwright['chromium'].launch({ headless: true });
   const context = await utils.getNewContext(browser);
-  let page = await context.newPage();
+  let page = await utils.getNewPage(context);
 
   let notifyRooms = [];
   console.log(`##### Start - Mitsui`);
@@ -123,6 +123,12 @@ pagenation = async (page) => {
 
     // Pagenation
     notifyRooms.push(...rooms)
+
+    if (utils.getNewPageCount() > setting.MAX_NEW_PAGE_COUNT) {
+      console.log('Reached max new page count', utils.getNewPageCount())
+      break
+    }
+
     const { nextPageExist,  nextPage } = await pagenation(page)
     if (!nextPageExist) {
       break;
