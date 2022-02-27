@@ -1,14 +1,7 @@
 const playwright = require('playwright');
-const Redis = require("ioredis");
 
 const utils = require('./utils')
-const Homes = require('./index-homes')
-const Suumo = require('./index-suumo')
-const RStore = require('./index-rstore')
 const setting = require('./setting')
-
-//const redis = new Redis(); // uses defaults unless given configuration object
-const redis = new Redis('192.168.2.132', 31951); // uses defaults unless given configuration object
 
 // エリア: 港区/渋谷区/新宿区/文京区/千代田区/目黒区/世田谷区/杉並区/中野区/豊島区/練馬区/板橋区
 // エリア: 東京都下
@@ -79,8 +72,7 @@ scanRoom = async (context, page) => {
     const link = roomLinks[i];
     const pathAddress = await link.getAttribute("href");
     console.log(pathAddress)
-    if (await redis.exists(pathAddress)) {
-      console.log('Already notified', pathAddress)
+    if (await utils.checkCacheByUrl(pathAddress)) {
       continue
     }
     const detailObj = await scanRoomDetail(context, pathAddress)
@@ -88,16 +80,15 @@ scanRoom = async (context, page) => {
       continue;
     }
     const key = utils.createKeyFromDetail(detailObj)
-    if (!await redis.exists(key)) {
-      if (utils.meetCondition(detailObj)) {
+    if (!await utils.checkCacheByKey(key)) {
+      if (await utils.meetCondition(detailObj)) {
         notifys.push(detailObj)
         console.log(pathAddress, key)
       } else {
         console.log('Doesn\'t meet the condition', key)
       }
     } else {
-      console.log('Already notified', key)
-      await redis.set(detailObj.address, 1)
+      await utils.addCache(detailObj)
     }
   }
   return notifys;
@@ -122,8 +113,8 @@ pagenation = async (page) => {
 }
 
 (async () => {
-  // const browser = await playwright['chromium'].launch({ headless: false });
-  const browser = await playwright['chromium'].launch({ headless: true });
+  const browser = await playwright['chromium'].launch({ headless: false });
+  // const browser = await playwright['chromium'].launch({ headless: true });
   const context = await utils.getNewContext(browser);
   let page = await context.newPage();
 
@@ -150,18 +141,15 @@ pagenation = async (page) => {
 
   for ( let i = 0; i < notifyRooms.length && i < setting.MAX_NOTIFIES_AT_ONCE; i++ ) {
     const key = utils.createKeyFromDetail(notifyRooms[i])
-    if (!await redis.exists(key)) {
+    if (!await utils.checkCacheByKey(key)) {
       await utils.notifyLine(notifyRooms[i])
       console.log('Notified (Paased redundant check)', key)
-      await redis.set(key, 1)
-      await redis.set(notifyRooms[i].address, 1)
-    } else {
-      console.log('Already notified (redundant check)', key)
+      await utils.addCache(notifyRooms[i])
     }
   }
   console.log(`##### Done - Mitsui`);
 
   await page.close()
   await browser.close();
-  redis.disconnect()
+  await utils.disconnectCache()
 })();

@@ -79,7 +79,7 @@ module.exports = class Suumo {
       }
       const key = utils.createKeyFromDetail(detailObj)
       if (!await this.redis.exists(key)) {
-        if ( utils.meetCondition(detailObj) ) {
+        if (await utils.meetCondition(detailObj) ) {
           notifys.push(detailObj)
           console.log(address, key)
         } else {

@@ -48,7 +48,7 @@ scanRoom = async (buildingElm) => {
       console.log(detailObj)
       const key = utils.createKeyFromDetail(detailObj)
       if (!await redis.exists(key)) {
-        if (utils.meetCondition(detailObj)) {
+        if (await utils.meetCondition(detailObj)) {
           rooms.push(detailObj)
           console.log(address, key)
         } else {

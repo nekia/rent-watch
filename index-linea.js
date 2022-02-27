@@ -57,7 +57,7 @@ scanRoom = async (context, address) => {
       }
       const key = utils.createKeyFromDetail(detailObj)
       if (!await redis.exists(key)) {
-        if (utils.meetCondition(detailObj)) {
+        if (await utils.meetCondition(detailObj)) {
           notifys.push(detailObj)
         } else {
           console.log('Doesn\'t meet the condition', key)
