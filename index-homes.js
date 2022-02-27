@@ -67,6 +67,7 @@ module.exports = class Homes {
     const notifys = [];
     const roomLinks = await page.$$('//li[@class="building-room"]/a');
     for (let i = 0; i < roomLinks.length; i++ ) {
+      console.log(`---------`)
       const link = roomLinks[i]
       const address = await link.getAttribute("href");
       if (await utils.checkCacheByUrl(address)) {

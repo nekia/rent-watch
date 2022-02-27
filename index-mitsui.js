@@ -68,6 +68,7 @@ scanRoom = async (context, page) => {
   
   const notifys = [];
   for (let i = 0; i < roomLinks.length; i++ ) {
+    console.log(`---------`)
     const link = roomLinks[i];
     const pathAddress = await link.getAttribute("href");
     if (await utils.checkCacheByUrl(pathAddress)) {

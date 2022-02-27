@@ -24,6 +24,7 @@ scanRoom = async (buildingElm) => {
   try {
     let roomElms = await buildingElm.$$('//li[contains(@class, "room-list-item")]/a')
     for (let i = 0; i < roomElms.length; i++ ) {
+      console.log(`---------`)
       const roomElm = roomElms[i];
       const address = await roomElm.getAttribute("href")
         .then( path => `https://www.rnt.co.jp${path}` )

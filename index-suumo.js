@@ -64,6 +64,7 @@ module.exports = class Suumo {
     const roomLinks = await page.$$('//h2[contains(@class, "property_inner-title")]/a')
     const notifys = [];
     for (let i = 0; i < roomLinks.length; i++ ) {
+      console.log(`---------`)
       const link = roomLinks[i];
       const pathAddress = await link.getAttribute("href");
       const address = `https://suumo.jp${pathAddress}`;
