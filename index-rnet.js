@@ -1,11 +1,7 @@
 const playwright = require('playwright');
-const Redis = require("ioredis");
 
 const utils = require('./utils')
 const setting = require('./setting')
-
-// const redis = new Redis(); // uses defaults unless given configuration object
-const redis = new Redis('192.168.2.132', 31951); // uses defaults unless given configuration object
 
 // エリア: 千代田区/新宿区/文京区/目黒区/世田谷区/渋谷区/中野区/杉並区/豊島区/港区/板橋区/練馬区
 // エリア: 東京都下
@@ -28,9 +24,7 @@ scanRoom = async (buildingElm) => {
       const roomElm = roomElms[i];
       const address = await roomElm.getAttribute("href")
         .then( path => `https://www.rnt.co.jp${path}` )
-      console.log(address)
-      if (await redis.exists(address)) {
-        console.log('Already notified', address)
+      if (await utils.checkCacheByUrl(address)) {
         continue
       }
       const floorLevel = await getFloorLevel(roomElm)
@@ -46,18 +40,10 @@ scanRoom = async (buildingElm) => {
           floorTopLevel
         }
       };
-      console.log(detailObj)
-      const key = utils.createKeyFromDetail(detailObj)
-      if (!await redis.exists(key)) {
-        if (await utils.meetCondition(detailObj)) {
-          rooms.push(detailObj)
-          console.log(address, key)
-        } else {
-          console.log('Doesn\'t meet the condition', key)
-        }
+      if (await utils.meetCondition(detailObj)) {
+        rooms.push(detailObj)
       } else {
-        console.log('Already notified', key)
-        await redis.set(detailObj.address, 1)
+        await utils.addCache(detailObj, utils.CACHE_KEY_VAL_INSPECTED)
       }
     }
   } catch (error) {
@@ -146,8 +132,8 @@ selectKodawari = async (page, label) => {
     .then( checkbox => checkbox.click() )
 };
 
-try {
-  (async () => {
+(async () => {
+  try {
     // const browser = await playwright['chromium'].launch({ headless: false });
     const browser = await playwright['chromium'].launch({ headless: true });
     const context = await utils.getNewContext(browser);
@@ -204,24 +190,22 @@ try {
 
     for ( let i = 0; i < notifyRooms.length && i < setting.MAX_NOTIFIES_AT_ONCE; i++ ) {
       const key = utils.createKeyFromDetail(notifyRooms[i])
-      if (!await redis.exists(key)) {
+      if (!await utils.checkCacheByKey(key)) {
         await utils.notifyLine(notifyRooms[i])
         console.log('Notified (Paased redundant check)', key)
-        await redis.set(key, 1)
-        await redis.set(notifyRooms[i].address, 1)
-      } else {
-        console.log('Already notified (redundant check)', key)
       }
+      await utils.addCache(notifyRooms[i], utils.CACHE_KEY_VAL_NOTIFIED)
     }
     console.log(`##### Done - R-Net`);
 
     await page.close()
     await browser.close();
-    redis.disconnect()
-  })();
-} catch (error) {
-  console.error('Aborted with error', error)
-  await page.close()
-  await browser.close();
-  redis.disconnect()
-}
+    await utils.disconnectCache()
+  } catch (error) {
+    console.error('Aborted with error', error)
+    await page.close()
+    await browser.close();
+    await utils.disconnectCache()
+  }
+})();
+  
