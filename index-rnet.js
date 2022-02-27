@@ -151,12 +151,12 @@ try {
     const browser = await playwright['chromium'].launch({ headless: true });
     const context = await utils.getNewContext(browser);
     let page = await context.newPage();
-  
+
     let notifyRooms = [];
     console.log(`##### Start - R-Net`);
     await page.goto(checkUrl);
     await page.waitForTimeout(1000)
-  
+
     // Preparing for query
     await selectWard(page, "千代田区")
     await selectWard(page, "新宿区")
@@ -170,26 +170,26 @@ try {
     await selectWard(page, "板橋区")
     await selectWard(page, "練馬区")
     await selectWard(page, "港区")
-  
+
     await page.$('//select[contains(@id, "SearchPriceMin")]')
       .then( select => select.selectOption({ label: "15万円"}) )
     await page.$('//select[contains(@id, "SearchPriceMax")]')
       .then( select => select.selectOption({ label: "25万円"}) )
     await page.$('//select[contains(@id, "SearchRoomAreaMin")]')
       .then( select => select.selectOption({ label: "50平米"}) )
-  
-  
+
+
     await selectKodawari(page, "15畳以上")
     await selectKodawari(page, "2階以上")
     await selectKodawari(page, "南向き")
-  
+
     await page.$('//a[text()[contains(., "この条件で検索する")]]')
       .then( btn => btn.click() )
     await page.waitForTimeout(5000)
-    
+
     while (1) {
       const rooms = await scanBuilding(context, page)
-  
+
       notifyRooms.push(...rooms)
       // Pagenation
       const { nextPageExist,  nextPage } = await pagenation(page)
@@ -200,7 +200,7 @@ try {
       }
       await page.waitForTimeout(5000)
     }
-  
+
     for ( let i = 0; i < notifyRooms.length && i < setting.MAX_NOTIFIES_AT_ONCE; i++ ) {
       const key = utils.createKeyFromDetail(notifyRooms[i])
       if (!await redis.exists(key)) {
@@ -213,13 +213,13 @@ try {
       }
     }
     console.log(`##### Done - R-Net`);
-  
+
     await page.close()
     await browser.close();
     redis.disconnect()
   })();
 } catch (error) {
-  console.error('Aborted with error', error)  
+  console.error('Aborted with error', error)
   await page.close()
   await browser.close();
   redis.disconnect()

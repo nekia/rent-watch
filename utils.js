@@ -55,11 +55,12 @@ createKeyFromDetail = (detailObj) => {
     detailObj.floorLevel.floorTopLevel,
     detailObj.location
   ].join('-');
-  console.log(key)
   return key
 }
 
 meetCondition = async (detailObj) => {
+  key = createKeyFromDetail(detailObj)
+  console.log('Check if meet the conditions', key, detailObj.address)
   if (detailObj.price > setting.MAX_ROOM_PRICE) {
     console.log('Too expensive!', detailObj.price)
     await addCacheInspected(detailObj)
@@ -136,13 +137,13 @@ addCacheInspected = async (detailObj) => {
   return await redis.set(detailObj.address, CACHE_KEY_VAL_INSPECTED)
 }
 
-addCache = async (detailObj) => {
+addCache = async (detailObj, stats) => {
   if (!setting.ENABLE_CACHE) {
     return
   }
   key = createKeyFromDetail(detailObj)
-  await redis.set(key, CACHE_KEY_VAL_NOTIFIED)
-  return await redis.set(detailObj.address, CACHE_KEY_VAL_NOTIFIED)
+  await redis.set(key, stats)
+  return await redis.set(detailObj.address, stats)
 }
 
 disconnectCache = async () => { await redis.disconnect()}
@@ -155,5 +156,7 @@ module.exports = {
   checkCacheByKey,
   addCache,
   addCacheInspected,
-  disconnectCache
+  disconnectCache,
+  CACHE_KEY_VAL_NOTIFIED,
+  CACHE_KEY_VAL_INSPECTED
 };

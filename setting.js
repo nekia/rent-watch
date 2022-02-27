@@ -2,7 +2,7 @@ const MAX_ROOM_PRICE = 23;
 const MIN_ROOM_SIZE = 57;
 const MIN_FLOOR_LEVEL = 2;
 const MAX_NOTIFIES_AT_ONCE = 200;
-const ENABLE_NOTIFY = false;
+const ENABLE_NOTIFY = true;
 const ENABLE_CACHE = true;
 const IGNORE_INSPECTED_CACHE = false;
 

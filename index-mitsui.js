@@ -23,7 +23,6 @@ scanRoomDetail = async (context, address) => {
     size = await getSizeFloat(roomPage)
     floorLevel = await getFloorLevel(roomPage)
     location = await getLocation(roomPage)
-    console.log(price, size, floorLevel, location)
   } catch (error) {
     console.warn('## Failed to retrieve the detail ##', address, error)
   } finally {
@@ -71,7 +70,6 @@ scanRoom = async (context, page) => {
   for (let i = 0; i < roomLinks.length; i++ ) {
     const link = roomLinks[i];
     const pathAddress = await link.getAttribute("href");
-    console.log(pathAddress)
     if (await utils.checkCacheByUrl(pathAddress)) {
       continue
     }
@@ -83,12 +81,9 @@ scanRoom = async (context, page) => {
     if (!await utils.checkCacheByKey(key)) {
       if (await utils.meetCondition(detailObj)) {
         notifys.push(detailObj)
-        console.log(pathAddress, key)
       } else {
-        console.log('Doesn\'t meet the condition', key)
+        await utils.addCache(detailObj, utils.CACHE_KEY_VAL_INSPECTED)
       }
-    } else {
-      await utils.addCache(detailObj)
     }
   }
   return notifys;
@@ -113,8 +108,7 @@ pagenation = async (page) => {
 }
 
 (async () => {
-  const browser = await playwright['chromium'].launch({ headless: false });
-  // const browser = await playwright['chromium'].launch({ headless: true });
+  const browser = await playwright['chromium'].launch({ headless: true });
   const context = await utils.getNewContext(browser);
   let page = await context.newPage();
 
@@ -144,7 +138,7 @@ pagenation = async (page) => {
     if (!await utils.checkCacheByKey(key)) {
       await utils.notifyLine(notifyRooms[i])
       console.log('Notified (Paased redundant check)', key)
-      await utils.addCache(notifyRooms[i])
+      await utils.addCache(notifyRooms[i], utils.CACHE_KEY_VAL_NOTIFIED)
     }
   }
   console.log(`##### Done - Mitsui`);
