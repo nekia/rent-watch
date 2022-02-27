@@ -10,6 +10,9 @@ done
 killall -9 chrome
 echo "Killing zombie process (chrome)"
 
+killall -9 node
+echo "Killing zombie process (node)"
+
 docker run --rm \
 	--ipc=host \
 	--user pwuser \
