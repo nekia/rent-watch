@@ -100,7 +100,7 @@ meetCondition = async (detailObj) => {
 checkCacheByUrl = async (url) => {
   if (!setting.IGNORE_INSPECTED_CACHE) {
     val = await redis.get(url)
-    if (val === '0' || val === '' || val == null) {
+    if (val == 0 || val === '0' || val === '' || val == null) {
       console.log('Not checked yet', url)
       return false
     } else {
@@ -110,7 +110,7 @@ checkCacheByUrl = async (url) => {
   }
 
   val = await redis.get(url)
-  if (val === '0' || val === "" || val == null || val === CACHE_KEY_VAL_INSPECTED) {
+  if (val == 0 || val === '0' || val === "" || val == null || val === CACHE_KEY_VAL_INSPECTED) {
       console.log('Not notified yet', url)
       return false
   } else {
@@ -122,7 +122,7 @@ checkCacheByUrl = async (url) => {
 checkCacheByKey = async (key) => {
   if (!setting.IGNORE_INSPECTED_CACHE) {
     val = await redis.exists(key)
-    if (val === '0' || val === '' || val == null) {
+    if (val == 0 || val === '0' || val === '' || val == null) {
       console.log('Not checked yet', key)
       return false
     } else {
@@ -132,7 +132,7 @@ checkCacheByKey = async (key) => {
   }
 
   val = await redis.get(key)
-  if (val === '0' || val === "" || val == null || val === CACHE_KEY_VAL_INSPECTED) {
+  if (val == 0 || val === '0' || val === "" || val == null || val === CACHE_KEY_VAL_INSPECTED) {
     console.log('Not notified yet', key)
     return false
   } else {
