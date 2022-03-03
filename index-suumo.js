@@ -103,7 +103,7 @@ module.exports = class Suumo {
     const floorLevel = await page.$('//th[text()[contains(., "階建")]]/following-sibling::td[1]')
     const floorLevelStr = await floorLevel.innerText()
     const floorLevelNoUnit = floorLevelStr.match(/[\d.]+/g);
-    return { floorLevel: parseInt(floorLevelNoUnit[0]), floorTopLevel: parseInt(floorLevelNoUnit[1])}
+    return { floorLevel: parseInt(floorLevelNoUnit[0]), floorTopLevel: parseInt(floorLevelNoUnit[floorLevelNoUnit.length - 1])}
   }
 
   getLocation = async (page) => {
