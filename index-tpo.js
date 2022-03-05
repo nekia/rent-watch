@@ -162,6 +162,6 @@ module.exports = class Rstore {
     return await page.$('//div[contains(@class, "roomAddress")]/p[1]').then((p) => p.innerText()).then( result => result.trim() );
   }
 
-  getSitename = () => { return 'R-Store' }
+  getSitename = () => { return 'T-P-O' }
 
 }
