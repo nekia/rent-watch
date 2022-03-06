@@ -27,6 +27,7 @@ docker run --rm \
 	-v $PWD/index-tpo.js:/usr/src/app/index-tpo.js \
 	-v $PWD/index-bs.js:/usr/src/app/index-bs.js \
 	-v $PWD/index-td.js:/usr/src/app/index-td.js \
+	-v $PWD/index-ken.js:/usr/src/app/index-ken.js \
 	-v $PWD/setting.js:/usr/src/app/setting.js \
 	-v $PWD/utils.js:/usr/src/app/utils.js \
 	--env LINE_NOTIFY_TOKEN=$LINE_NOTIFY_TOKEN \
