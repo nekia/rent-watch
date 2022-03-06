@@ -24,14 +24,14 @@ module.exports = class Rstore {
 
   pagenation = async (page) => {
     try {
-      const nextPageAnchor = await page.$('//span[text()="もっと見る"]/parent::a');
+      const nextPageAnchor = await page.$('//div[contains(@class, "result-list") and not(@style="display: none;")]//span[text()="もっと見る"]/parent::a');
       if (!nextPageAnchor) {
         console.log('End of pages')
         return { nextPageExist: false, nextPage: page };
       } else {
         console.log('Next page')
         await nextPageAnchor.click()
-        await page.waitForTimeout(10000)
+        await page.waitForTimeout(5000)
         return { nextPageExist: true, nextPage: page };
       }
     } catch (error) {
@@ -60,6 +60,16 @@ module.exports = class Rstore {
 
   scanRoom = async (page) => {
     const notifys = [];
+
+    while (true) {
+      const { nextPageExist,  nextPage } = await this.pagenation(page)
+      if (!nextPageExist) {
+        break;
+      } else {
+        page = nextPage;
+      }
+    }
+
     const roomLinks = await page.$$('//div[contains(@class, "js-itemArea")]//a');
     for (let i = 0; i < roomLinks.length; i++ ) {
       console.log(`---------`)
