@@ -17,7 +17,7 @@ module.exports = class Rstore {
   }
 
   getCheckUrl = () => {
-    return checkUrl;
+    return [ checkUrl ];
   }
 
   pagenation = async (page) => {

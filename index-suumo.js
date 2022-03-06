@@ -18,7 +18,7 @@ module.exports = class Suumo {
   }
 
   getCheckUrl = () => {
-    return checkUrl;
+    return [checkUrl];
   }
 
   pagenation = async (page) => {
