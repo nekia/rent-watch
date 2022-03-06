@@ -7,6 +7,7 @@ const RStore = require('./index-rstore');
 const TPO = require('./index-tpo');
 const BS = require('./index-bs');
 const TD = require('./index-td');
+const KEN = require('./index-ken');
 const setting = require('./setting');
 
 (async () => {
@@ -18,7 +19,8 @@ const setting = require('./setting');
   const tpoSite = new TPO(browser, context)
   const bsSite = new BS(browser, context)
   const tdSite = new TD(browser, context)
-  const searchingSites =  [homesSite, suumoSite, rstoreSite, tpoSite, bsSite, tdSite];
+  const kenSite = new KEN(browser, context)
+  const searchingSites =  [homesSite, suumoSite, rstoreSite, tpoSite, bsSite, tdSite, kenSite];
 
   let page = await utils.getNewPage(context);
 
