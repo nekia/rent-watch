@@ -5,6 +5,7 @@ const Homes = require('./index-homes');
 const Suumo = require('./index-suumo');
 const RStore = require('./index-rstore');
 const TPO = require('./index-tpo');
+const BS = require('./index-bs');
 const setting = require('./setting');
 
 (async () => {
@@ -14,7 +15,8 @@ const setting = require('./setting');
   const suumoSite = new Suumo(browser, context)
   const rstoreSite = new RStore(browser, context)
   const tpoSite = new TPO(browser, context)
-  const searchingSites =  [homesSite, suumoSite, rstoreSite, tpoSite];
+  const bsSite = new BS(browser, context)
+  const searchingSites =  [homesSite, suumoSite, rstoreSite, tpoSite, bsSite];
 
   let page = await utils.getNewPage(context);
 

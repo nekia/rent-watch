@@ -100,6 +100,7 @@ module.exports = class Suumo {
   }
 
   getFloorLevel = async (page) => {
+    // 階建 | 8階/地下2地上31階建
     const floorLevel = await page.$('//th[text()[contains(., "階建")]]/following-sibling::td[1]')
     const floorLevelStr = await floorLevel.innerText()
     const floorLevelNoUnit = floorLevelStr.match(/[\d.]+/g);
