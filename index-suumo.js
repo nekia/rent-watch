@@ -9,7 +9,7 @@ const utils = require('./utils')
 // 築年数: 未指定
 // こだわり: 2階以上/南向き/定期借家含まない
 // 情報の公開日: 本日の新着物件
-const checkUrl = 'https://suumo.jp/jj/chintai/ichiran/FR301FC001/?ar=030&bs=040&ta=13&sc=13101&sc=13102&sc=13103&sc=13104&sc=13105&sc=13113&sc=13109&sc=13110&sc=13111&sc=13112&sc=13114&sc=13115&sc=13120&sc=13116&sc=13203&sc=13204&cb=0.0&ct=25.0&et=9999999&cn=9999999&mb=55&mt=9999999&tc=0401303&tc=0400101&tc=0400104&tc=0401106&shkr1=03&shkr2=03&shkr3=03&shkr4=03&fw2=&srch_navi=1';
+const checkUrl = 'https://suumo.jp/jj/chintai/ichiran/FR301FC001/?ar=030&bs=040&fw2=&pc=30&po1=25&po2=99&ta=13&sc=13101&sc=13103&sc=13104&sc=13105&sc=13113&sc=13109&sc=13110&sc=13111&sc=13112&sc=13114&sc=13115&sc=13120&sc=13116&sc=13203&sc=13204&cb=15.0&ct=25.0&et=9999999&mb=55&mt=9999999&cn=9999999&tc=0401303&tc=0400101&tc=0400104&tc=0401106&shkr1=03&shkr2=03&shkr3=03&shkr4=03';
 
 module.exports = class Suumo {
   constructor(browser, context) {
