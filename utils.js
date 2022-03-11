@@ -10,7 +10,6 @@ const LINE_TOKEN = process.env.LINE_NOTIFY_TOKEN;
 const CACHE_KEY_VAL_NOTIFIED = "1"
 const CACHE_KEY_VAL_INSPECTED = "2"
 
-//const redis = new Redis(); // uses defaults unless given configuration object
 const redis = new Redis('192.168.2.132', 31951); // uses defaults unless given configuration object
 
 const config = {
@@ -93,6 +92,16 @@ meetCondition = async (detailObj) => {
     await addCacheInspected(detailObj)
     return false;
   }
+
+  if (detailObj.builtYear) {
+    const age = new Date().getFullYear() - detailObj.builtYear;
+    if ( age > setting.MAX_BUILDING_AGE ) {
+      console.log('Too old building!', detailObj.builtYear)
+      await addCacheInspected(detailObj)
+      return false;
+    }
+  }
+
   console.log('Meet the condition !!!')
   return true
 }

@@ -14,7 +14,7 @@ const checkUrl = 'https://www.linea.co.jp/article/list/type/rent?pre2=1&pmi=10&p
 
 scanRoomDetail = async (context, address) => {
   const roomPage = await utils.getNewPage(context);
-  let price = 0.0, size = 0.0, floorLevel = {}, location = "";
+  let price = 0.0, size = 0.0, floorLevel = {}, location = "", builtYear = 0;
   try {
     await roomPage.goto(address);
     await roomPage.waitForTimeout(1000)
@@ -22,12 +22,13 @@ scanRoomDetail = async (context, address) => {
     size = await getSizeFloat(roomPage)
     floorLevel = await getFloorLevel(roomPage)
     location = await getLocation(roomPage)
+    builtYear = await getBuiltYear(roomPage)
   } catch (error) {
     console.warn('## Failed to retrieve the detail ##', address, error)
   } finally {
     await roomPage.close();
   }
-  return { address, price, size, floorLevel, location }
+  return { address, price, size, floorLevel, location, builtYear }
 };
 
 scanRoom = async (context, address) => {
@@ -101,6 +102,15 @@ getLocation = async (page) => {
     .then( elm => elm.innerText() )
     .then( str => str.trim() )
   return addressStr
+}
+
+getBuiltYear = async (page) => {
+  return page.$('//div[contains(@class, "spec-group-item")]//dt[text()="竣工年"]/following-sibling::dd[1]')
+    .then( elm => elm.innerText() )
+    .then( str => {
+      const builtYrStr = str.match(/(\d+)年/)
+      return parseInt(builtYrStr[1])
+    })
 }
 
 scanBuilding = async (context, page) => {

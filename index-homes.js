@@ -8,7 +8,7 @@ const utils = require('./utils')
 // 築年数: 未指定
 // こだわり: 2階以上/南向き
 // 情報の公開日: 本日
-const checkUrl = 'https://www.homes.co.jp/chintai/imayori/list/?sortBy=%24imayori%3Awantmcf&prefectureId=13&cityIds=13101%2C13104%2C13105%2C13110%2C13112%2C13113%2C13114%2C13115%2C13116%2C13203%2C13204%2C13210%2C13214%2C13120%2C13103%2C13119&monthMoneyRoom=15&monthMoneyRoomHigh=30&houseArea=50&walkMinutes=0&houseAgeHigh=0&newDate=1&mcfs=340102%2C340501&needsCodes=5';
+const checkUrl = 'https://www.homes.co.jp/chintai/imayori/list/?prefectureId=13&cityIds=13101%2C13102%2C13103%2C13104%2C13105%2C13109%2C13110%2C13111%2C13112%2C13113%2C13114%2C13115%2C13116%2C13120%2C13203%2C13204&monthMoneyRoom=15&monthMoneyRoomHigh=30&moneyMaintenanceInclude=1&houseArea=50&newDate=1&mcfs=340501%2C340102&wantMcfs=113601%2C263101%2C293101&needsCodes=15';
 
 module.exports = class Homes {
   constructor(browser, context) {
@@ -42,7 +42,7 @@ module.exports = class Homes {
   scanRoomDetail = async (address) => {
     const context = await utils.getNewContext(this.browser);
     const roomPage = await utils.getNewPage(context);
-    let price = 0.0, size = 0.0, floorLevel = {}, location = "";
+    let price = 0.0, size = 0.0, floorLevel = {}, location = "", builtYear = 0;
     try {
       await roomPage.goto(address);
       await roomPage.waitForTimeout(1000)
@@ -50,13 +50,14 @@ module.exports = class Homes {
       size = await this.getSizeFloat(roomPage)
       floorLevel = await this.getFloorLevel(roomPage)
       location = await this.getLocation(roomPage)
+      builtYear = await this.getBuiltYear(roomPage)
     } catch (error) {
       console.warn('## Failed to retrieve the detail ##', address, error)
     } finally {
       await roomPage.close();
       await context.close();
     }
-    return { address, price, size, floorLevel, location }
+    return { address, price, size, floorLevel, location, builtYear }
   }
   
   scanRoom = async (page) => {
@@ -113,6 +114,14 @@ module.exports = class Homes {
     const address = await page.$('//span[text()[contains(., "所在地")]]/parent::*/following-sibling::dd[1]')
     const addressStr = await address.innerText().then( result => result.trim().split('\n')[0] );
     return addressStr
+  }
+
+  getBuiltYear = async (page) => {
+    const builtYrElm = await page.$('//dd[@id="chk-bkc-kenchikudate"]')
+    return builtYrElm.innerText().then( (result) => {
+      const builtYrStr = result.match(/(\d+)年/)
+      return parseInt(builtYrStr[1])
+    });
   }
 
   getSitename = () => { return 'Homes' }

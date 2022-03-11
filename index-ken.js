@@ -42,7 +42,7 @@ module.exports = class Rstore {
 
   scanRoomDetail = async (address) => {
     const roomPage = await utils.getNewPage(this.context);
-    let price = 0, size = 0.0, floorLevel = {}, location = "";
+    let price = 0, size = 0.0, floorLevel = {}, location = "", builtYear = 0;
     try {
       await roomPage.goto(address)
       await roomPage.waitForTimeout(1000)
@@ -50,12 +50,13 @@ module.exports = class Rstore {
       size = await this.getSizeFloat(roomPage)
       floorLevel = await this.getFloorLevel(roomPage)
       location = await this.getLocation(roomPage)
+      builtYear = await this.getBuiltYear(roomPage)
     } catch (error) {
       console.warn('## Failed to retrieve the detail ##', address, error)
     } finally {
       await roomPage.close();
     }
-    return { address, price, size, floorLevel, location }
+    return { address, price, size, floorLevel, location, builtYear }
   }
 
   scanRoom = async (page) => {
@@ -118,6 +119,15 @@ module.exports = class Rstore {
     const address = await page.$('//h2[text()="物件詳細"]/parent::div/parent::div/following-sibling::div//th[text()="住所"]/following-sibling::td')
     const addressStr = await address.innerText().then( result => result.trim() );
     return addressStr
+  }
+
+  getBuiltYear = async (page) => {
+    return page.$('//h2[text()="物件詳細"]/parent::div/parent::div/following-sibling::div//th[text()="竣工"]/following-sibling::td')
+    .then( td => td.innerText() )
+    .then( str => {
+      const builtYrStr = str.match(/(\d+)年/)
+      return parseInt(builtYrStr[1])
+    })
   }
 
   getSitename = () => { return 'Ken Corporation' }

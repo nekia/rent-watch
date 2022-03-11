@@ -10,12 +10,12 @@ const setting = require('./setting')
 // 駅徒歩分数: 未指定
 // 築年数: 未指定
 // こだわり: 2階以上/南向き/定期借家を含まない
-const checkUrl = 'https://www.mitsui-chintai.co.jp/rf/result?ku=(1,22),(1,10),(1,11),(1,21),(1,23),(1,14),(1,12),(1,19),(1,18),(1,20),(1,3)&kn=2&res=150&reb=250&ms=(50,0)&dir=3&flo=2&cms=1dvxwqtyww&get=ward';
+const checkUrl = 'https://www.mitsui-chintai.co.jp/rf/result?ku=(1,22),(1,10),(1,16),(1,11),(1,21),(1,17),(1,23),(1,14),(1,9),(1,5),(1,12),(1,19),(1,18),(1,20)&kn=2&res=150&reb=250&ms=(50,0)&dir=3&flo=2&cms=1dvxwqtyww&get=ward';
 
 
 scanRoomDetail = async (context, address) => {
   const roomPage = await utils.getNewPage(context);
-  let price = 0.0, size = 0.0, floorLevel = {}, location = "";
+  let price = 0.0, size = 0.0, floorLevel = {}, location = "", builtYear = 0;
   try {
     await roomPage.goto(address);
     await roomPage.waitForTimeout(1000)
@@ -23,12 +23,13 @@ scanRoomDetail = async (context, address) => {
     size = await getSizeFloat(roomPage)
     floorLevel = await getFloorLevel(roomPage)
     location = await getLocation(roomPage)
+    builtYear = await getBuiltYear(roomPage)
   } catch (error) {
     console.warn('## Failed to retrieve the detail ##', address, error)
   } finally {
     await roomPage.close();
   }
-  return { address, price, size, floorLevel, location }
+  return { address, price, size, floorLevel, location, builtYear }
 };
 
 getPriceFloat = async (page) => {
@@ -61,6 +62,15 @@ getLocation = async (page) => {
     .then( elm => elm.innerText() )
     .then( str => str.trim() )
   return addressStr
+}
+
+getBuiltYear = async (page) => {
+  return page.$('//dl[@class="estb"]/dd')
+    .then( elm => elm.innerText() )
+    .then( str => {
+      const builtYrStr = str.match(/(\d+)年/)
+      return parseInt(builtYrStr[1])
+    })
 }
 
 scanRoom = async (context, page) => {

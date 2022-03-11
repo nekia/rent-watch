@@ -8,7 +8,7 @@ const utils = require('./utils')
 // 築年数: 未指定
 // こだわり: 2階以上
 // 情報の公開日: 本日
-const checkUrl = 'https://www.r-store.jp/search/?&sb_get_full1=true&sb_purpose1%5B%5D=R&sb_r_min=150000&sb_r_max=250000&sb_area_up=55&sb_kodawari_category%5B%5D=2%E9%9A%8E%E4%BB%A5%E4%B8%8A&sb_c%5B%5D=13101&sb_c%5B%5D=13103&sb_c%5B%5D=13104&sb_c%5B%5D=13105&sb_c%5B%5D=13113&sb_c%5B%5D=13110&sb_c%5B%5D=13112&sb_c%5B%5D=13114&sb_c%5B%5D=13115&sb_c%5B%5D=13120&sb_c%5B%5D=13116&sb_c%5B%5D=13119&sb_c%5B%5D=13203&sb_c%5B%5D=13204&sb_c%5B%5D=13210&sb_c%5B%5D=13214&sb_get_full2=true&sb_purpose2%5B%5D=RO&sb_purpose2%5B%5D=RS&sort_key=1&view_num=10&get_full=true';
+const checkUrl = 'https://www.r-store.jp/search/?&sb_get_full1=true&sb_purpose1%5B%5D=R&sb_r_min=150000&sb_r_max=250000&sb_area_up=55&sb_kodawari_category%5B%5D=2%E9%9A%8E%E4%BB%A5%E4%B8%8A&sb_c%5B%5D=13101&sb_c%5B%5D=13102&sb_c%5B%5D=13103&sb_c%5B%5D=13104&sb_c%5B%5D=13105&sb_c%5B%5D=13113&sb_c%5B%5D=13109&sb_c%5B%5D=13110&sb_c%5B%5D=13111&sb_c%5B%5D=13112&sb_c%5B%5D=13114&sb_c%5B%5D=13115&sb_c%5B%5D=13120&sb_c%5B%5D=13116&sb_c%5B%5D=13203&sb_c%5B%5D=13204&sb_get_full2=true&sb_purpose2%5B%5D=RO&sb_purpose2%5B%5D=RS&sort_key=1&view_num=10&get_full=true';
 
 module.exports = class Rstore {
   constructor(browser, context) {
@@ -40,7 +40,7 @@ module.exports = class Rstore {
 
   scanRoomDetail = async (address) => {
     const roomPage = await utils.getNewPage(this.context);
-    let price = 0, size = 0.0, floorLevel = {}, location = "";
+    let price = 0, size = 0.0, floorLevel = {}, location = "", builtYear = 0;
     try {
       await roomPage.goto(address)
       await roomPage.waitForTimeout(1000)
@@ -48,12 +48,13 @@ module.exports = class Rstore {
       size = await this.getSizeFloat(roomPage)
       floorLevel = await this.getFloorLevel(roomPage)
       location = await this.getLocation(roomPage)
+      builtYear = await this.getBuiltYear(roomPage)
     } catch (error) {
       console.warn('## Failed to retrieve the detail ##', address, error)
     } finally {
       await roomPage.close();
     }
-    return { address, price, size, floorLevel, location }
+    return { address, price, size, floorLevel, location, builtYear }
   }
 
   scanRoom = async (page) => {
@@ -114,6 +115,15 @@ module.exports = class Rstore {
     const address = await page.$('//h3[text()[contains(., "所在地")]]/following-sibling::p[1]/a')
     const addressStr = await address.innerText().then( result => result.trim() );
     return addressStr
+  }
+
+  getBuiltYear = async (page) => {
+    return page.$('//h3[text()="築年"]/following-sibling::p[1]')
+    .then( p => p.innerText() )
+    .then( str => {
+      const builtYrStr = str.match(/(\d+)年/)
+      return parseInt(builtYrStr[1])
+    })
   }
 
   getSitename = () => { return 'R-Store' }

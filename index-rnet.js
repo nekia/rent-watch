@@ -15,14 +15,15 @@ const checkUrl = 'https://www.rnt.co.jp/search/address/';
 scanRoom = async (buildingElm) => {
   const location = await getLocation(buildingElm);
   const floorTopLevel = await getFloorTopLevel(buildingElm);
-
+  const builtYear = await getBuiltYear(buildingElm)
+  let address = '';
   const rooms = [];
   try {
     let roomElms = await buildingElm.$$('//li[contains(@class, "room-list-item")]/a')
     for (let i = 0; i < roomElms.length; i++ ) {
       console.log(`---------`)
       const roomElm = roomElms[i];
-      const address = await roomElm.getAttribute("href")
+      address = await roomElm.getAttribute("href")
         .then( path => `https://www.rnt.co.jp${path}` )
       if (await utils.checkCacheByUrl(address)) {
         continue
@@ -38,7 +39,8 @@ scanRoom = async (buildingElm) => {
         floorLevel: {
           floorLevel,
           floorTopLevel
-        }
+        },
+        builtYear
       };
       if (await utils.meetCondition(detailObj)) {
         rooms.push(detailObj)
@@ -87,6 +89,15 @@ getLocation = async (buildingElm) => {
     .then( ret => ret[1].replace(/\s/g, ''));
 }
 
+getBuiltYear = async (buildingElm) => {
+  return buildingElm.$('//dt[text()="築年月"]/following-sibling::dd[1]')
+    .then( elm => elm.innerText())
+    .then( str => {
+      const builtYrStr = str.match(/(\d+)年/)
+      return parseInt(builtYrStr[1])
+  })
+}
+
 scanBuilding = async (context, page) => {
   const buildings = await page.$$('//div[@class="boxBuildingList"]')
 
@@ -94,8 +105,8 @@ scanBuilding = async (context, page) => {
   const notifys = [];
   for (let i = 0; i < buildings.length; i++ ) {
     try {
-      const link = buildings[i];
-      const rooms = await scanRoom(link)
+      const buildingElm = buildings[i];
+      const rooms = await scanRoom(buildingElm)
       notifyRooms.push(...rooms)
     } catch (error) {
       console.warn('## Failed to retrieve the building info ##', error)
@@ -146,17 +157,19 @@ selectKodawari = async (page, label) => {
 
     // Preparing for query
     await selectWard(page, "千代田区")
+    await selectWard(page, "中央区")
+    await selectWard(page, "港区")
     await selectWard(page, "新宿区")
     await selectWard(page, "文京区")
+    await selectWard(page, "品川区")
     await selectWard(page, "目黒区")
+    await selectWard(page, "大田区")
     await selectWard(page, "世田谷区")
     await selectWard(page, "渋谷区")
     await selectWard(page, "中野区")
     await selectWard(page, "杉並区")
     await selectWard(page, "豊島区")
-    await selectWard(page, "板橋区")
     await selectWard(page, "練馬区")
-    await selectWard(page, "港区")
 
     await page.$('//select[contains(@id, "SearchPriceMin")]')
       .then( select => select.selectOption({ label: "15万円"}) )
