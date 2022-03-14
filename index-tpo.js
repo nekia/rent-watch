@@ -8,7 +8,7 @@ const utils = require('./utils')
 // 築年数: 未指定
 // こだわり: 2階以上
 // 情報の公開日: 本日
-const checkUrl = 'https://www.t-p-o.com/rent/?type=rent&area_id%5B%5D=1301&area_id%5B%5D=1302&area_id%5B%5D=1303&area_id%5B%5D=1304&area_id%5B%5D=1305&area_id%5B%5D=1306&area_id%5B%5D=1307&area_id%5B%5D=1308&area_id%5B%5D=1309&area_id%5B%5D=1310&area_id%5B%5D=1311&area_id%5B%5D=1312&area_id%5B%5D=1313&area_id%5B%5D=1314&area_id%5B%5D=1316&area_id%5B%5D=1300&price_min=160000&price_max=240000&exclusive_area_min=55&exclusive_area_max=100&property_name=';
+const checkUrl = 'https://www.t-p-o.com/rent/?type=rent&area_id%5B%5D=1301&area_id%5B%5D=1302&area_id%5B%5D=1303&area_id%5B%5D=1304&area_id%5B%5D=1306&area_id%5B%5D=1307&area_id%5B%5D=1308&area_id%5B%5D=1309&area_id%5B%5D=1310&area_id%5B%5D=1311&area_id%5B%5D=1314&area_id%5B%5D=1316&area_id%5B%5D=1300&price_min=&price_max=&exclusive_area_min=&exclusive_area_max=&property_name=';
 
 module.exports = class Rstore {
   constructor(browser, context) {

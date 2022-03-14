@@ -162,7 +162,6 @@ selectKodawari = async (page, label) => {
     await selectWard(page, "文京区")
     await selectWard(page, "品川区")
     await selectWard(page, "目黒区")
-    await selectWard(page, "大田区")
     await selectWard(page, "世田谷区")
     await selectWard(page, "渋谷区")
     await selectWard(page, "中野区")
