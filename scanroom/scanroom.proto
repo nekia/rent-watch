@@ -1,0 +1,33 @@
+// Protocol Buffersのバージョンを指定
+syntax = "proto3";
+
+// パッケージを指定
+package scanroom;
+
+// サービスを定義
+service Scanner {
+  // 引数の型：HelloRequestメッセージ
+  // 戻り値の型：HelloReplyメッセージ
+  rpc ScanRoomDetail (ScanRequest) returns (RoomDetail) {}
+}
+
+// メッセージの型を定義
+message ScanRequest {
+  // 各フィールドに識別子としてタグを付ける
+  // 値をフィールドに代入しているわけではないことに注意
+  string url = 1;
+}
+
+message RoomDetail {
+  string address = 1;
+  double price = 2;
+  double size = 3;
+  FloorLevel floorLevel = 4;
+  string location = 5;
+  int32 builtYear = 6;
+}
+
+message FloorLevel {
+  int32 floorLevel = 1;
+  int32 floorTopLevel = 2;
+}

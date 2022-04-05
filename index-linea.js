@@ -1,4 +1,34 @@
-const playwright = require('playwright');
+const playwright = require('playwright-chromium');
+// const playwright = require('playwright-core')
+
+const SCANNER_PROTO_PATH = __dirname + '/scanroom/scanroom.proto';
+const NOTIFIER_PROTO_PATH = __dirname + '/notification/notification.proto';
+
+const grpc = require('@grpc/grpc-js');
+// 定義ファイル(.protoファイル)の読み込み
+const protoLoader = require('@grpc/proto-loader');
+const packageDefinitionScanner = protoLoader.loadSync(
+  SCANNER_PROTO_PATH,
+  {
+    keepCase: true,
+    longs: String,
+    enums: String,
+    defaults: true,
+    oneofs: true
+  });
+
+const packageDefinitionNotifier = protoLoader.loadSync(
+  NOTIFIER_PROTO_PATH,
+  {
+    keepCase: true,
+    longs: String,
+    enums: String,
+    defaults: true,
+    oneofs: true
+  });
+
+const scanner_proto = grpc.loadPackageDefinition(packageDefinitionScanner).scanroom;
+const notifier_proto = grpc.loadPackageDefinition(packageDefinitionNotifier).notification;
 
 const utils = require('./utils')
 const setting = require('./setting')
@@ -12,26 +42,7 @@ const setting = require('./setting')
 // こだわり: 2階以上/南向き/定期借家を含まない
 const checkUrl = 'https://www.linea.co.jp/article/list/type/rent?pre2=1&pmi=10&pma=16&smi=6&sma=&req=&bye=4&name=';
 
-scanRoomDetail = async (context, address) => {
-  const roomPage = await utils.getNewPage(context);
-  let price = 0.0, size = 0.0, floorLevel = {}, location = "", builtYear = 0;
-  try {
-    await roomPage.goto(address);
-    await roomPage.waitForTimeout(1000)
-    price = await getPriceFloat(roomPage)
-    size = await getSizeFloat(roomPage)
-    floorLevel = await getFloorLevel(roomPage)
-    location = await getLocation(roomPage)
-    builtYear = await getBuiltYear(roomPage)
-  } catch (error) {
-    console.warn('## Failed to retrieve the detail ##', address, error)
-  } finally {
-    await roomPage.close();
-  }
-  return { address, price, size, floorLevel, location, builtYear }
-};
-
-scanRoom = async (context, address) => {
+scanRoom = async (context, address, client) => {
   const roomPage = await utils.getNewPage(context);
 
   const notifys = [];
@@ -41,11 +52,16 @@ scanRoom = async (context, address) => {
     let roomLinks = await roomPage.$$('//article[contains(@class, "room-post")]/a')
     for (let i = 0; i < roomLinks.length; i++ ) {
       const link = roomLinks[i];
-      const roomAddress = await link.getAttribute("href");
-      if (await utils.checkCacheByUrl(roomAddress)) {
+      const url = await link.getAttribute("href");
+      if (await utils.checkCacheByUrl(url)) {
         continue
       }
-      const detailObj = await scanRoomDetail(context, roomAddress)
+
+      const detailObj = await new Promise((resolv, reject) => {
+        client.ScanRoomDetail({ url }, function(err, response) {
+          resolv(response)
+        });
+      });
       if (detailObj.location.length == 0) {
         continue;
       }
@@ -63,57 +79,7 @@ scanRoom = async (context, address) => {
   return notifys
 };
 
-getPriceFloat = async (page) => {
-  const priceStr = await page.$('//ul[contains(@class, "room-main-floor-list")]/li[text()[contains(., "賃料")]]')
-    .then( elm => elm.innerText())
-    .then( str => str.match(/([\d,]+)円/) )
-  return parseInt(priceStr[1].replace(/,/g, ''))/10000
-}
-
-getSizeFloat = async (page) => {
-  const roomSizeStr = await page.$('//ul[contains(@class, "room-main-floor-list")]/li[text()[contains(., "面積")]]')
-    .then( elm => elm.innerText() )
-    .then( str => str.match(/([\d.]+)㎡/))
-  return parseFloat(roomSizeStr[1])
-}
-
-getFloorLevel = async (page) => {
-  const floorLevel = await page.$('//div[contains(@class, "room-main-floor-name")]/a')
-    .then( elm => elm.innerText() )
-    .then( str => str.match(/(\d+)\d\d/))
-
-  const floorLevellInt = floorLevel != null ? parseInt(floorLevel[1]) : 2;
-
-  let floorTopLevelInt = 0;
-  try {
-    const floorTopLevel = await page.$('//ul[contains(@class, "apartment-header-listSpec")]/li[text()[contains(., "階")]]')
-    .then(　elm => elm.innerText())
-    .then(　str => str.match(/(\d+)階建*/))
-    floorTopLevelInt = parseInt(floorTopLevel[1])
-  } catch (error) {
-    floorTopLevelInt = floorLevellInt + 1;
-  }
-
-  return { floorLevel: floorLevellInt, floorTopLevel: floorTopLevelInt }
-}
-
-getLocation = async (page) => {
-  const addressStr = await page.$('//div[contains(@class, "spec-group-item")]//dt[text()[contains(., "所在地")]]/following-sibling::dd[1]')
-    .then( elm => elm.innerText() )
-    .then( str => str.trim() )
-  return addressStr
-}
-
-getBuiltYear = async (page) => {
-  return page.$('//div[contains(@class, "spec-group-item")]//dt[text()="竣工年"]/following-sibling::dd[1]')
-    .then( elm => elm.innerText() )
-    .then( str => {
-      const builtYrStr = str.match(/(\d+)年/)
-      return parseInt(builtYrStr[1])
-    })
-}
-
-scanBuilding = async (context, page) => {
+scanBuilding = async (context, page, client) => {
   const roomLinks = await page.$$('//div[contains(@class, "pc-residence-row")]//a[contains(@class, "arrow")]')
 
   let notifyRooms = [];
@@ -122,7 +88,7 @@ scanBuilding = async (context, page) => {
     try {
       const link = roomLinks[i];
       const pathAddress = await link.getAttribute("href");
-      const rooms = await scanRoom(context, pathAddress)
+      const rooms = await scanRoom(context, pathAddress, client)
       notifyRooms.push(...rooms)
     } catch (error) {
       console.warn('## Failed to retrieve the building info ##', address, error)
@@ -150,6 +116,12 @@ pagenation = async (page) => {
 }
 
 (async () => {
+
+  const clientScanner = new scanner_proto.Scanner('127.0.0.1:50051',
+    grpc.credentials.createInsecure());
+  const clientNotifier = new notifier_proto.Notifier('127.0.0.1:50052',
+    grpc.credentials.createInsecure());
+
   const browser = await playwright['chromium'].launch({ headless: true });
   const context = await utils.getNewContext(browser);
   let page = await utils.getNewPage(context);
@@ -160,7 +132,7 @@ pagenation = async (page) => {
   await page.waitForTimeout(1000)
 
   while (1) {
-    const rooms = await scanBuilding(context, page)
+    const rooms = await scanBuilding(context, page, clientScanner)
 
     notifyRooms.push(...rooms)
 
@@ -179,14 +151,13 @@ pagenation = async (page) => {
     await page.waitForTimeout(5000)
   }
 
-  for ( let i = 0; i < notifyRooms.length && i < setting.MAX_NOTIFIES_AT_ONCE; i++ ) {
-    const key = utils.createKeyFromDetail(notifyRooms[i])
-    if (!await utils.checkCacheByKey(key)) {
-      await utils.notifyLine(notifyRooms[i])
-      console.log('Notified (Paased redundant check)', key)
-    }
-    await utils.addCache(notifyRooms[i], utils.CACHE_KEY_VAL_NOTIFIED)
-  }
+  const response = await new Promise((resolv, reject) => {
+    clientNotifier.Notify( { rooms: notifyRooms }, function(err, response) {
+      console.log('Completed Notify', response.status)
+      resolv(response)
+    });
+  })
+
   console.log(`##### Done - Linea`);
 
   await page.close()

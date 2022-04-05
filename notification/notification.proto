@@ -1,0 +1,34 @@
+// Protocol Buffersのバージョンを指定
+syntax = "proto3";
+
+// パッケージを指定
+package notification;
+
+// サービスを定義
+service Notifier {
+  // 引数の型：HelloRequestメッセージ
+  // 戻り値の型：HelloReplyメッセージ
+  rpc Notify (NotifyRequest) returns (Response);
+}
+
+message NotifyRequest {
+  repeated RoomDetail rooms = 1;
+}
+
+message Response {
+  string status = 1;
+}
+
+message RoomDetail {
+  string address = 1;
+  double price = 2;
+  double size = 3;
+  FloorLevel floorLevel = 4;
+  string location = 5;
+  int32 builtYear = 6;
+}
+
+message FloorLevel {
+  int32 floorLevel = 1;
+  int32 floorTopLevel = 2;
+}
