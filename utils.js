@@ -1,6 +1,8 @@
 const querystring = require('querystring');
 const axios = require('axios');
 const Redis = require("ioredis");
+const nats = require('nats');
+
 const setting = require('./setting');
 
 const BASE_URL = 'https://notify-api.line.me';
@@ -26,6 +28,20 @@ const config = {
 };
 
 let newPageCount = 0;
+
+openNConn = () => {
+  // to create a connection to a nats-server:
+  return nats.connect({ servers: "localhost:4222" });
+}
+
+publishRoom = (nc, url) => {
+  const sc = nats.StringCodec();
+  nc.publish("rooms", sc.encode(url));
+}
+
+closeNConn = async (nc) => {
+  await nc.drain()
+}
 
 notifyLine = async (roomObj) => {
   if (setting.ENABLE_NOTIFY) {
@@ -181,6 +197,9 @@ module.exports = {
   addCache,
   addCacheInspected,
   disconnectCache,
+  openNConn,
+  publishRoom,
+  closeNConn,
   CACHE_KEY_VAL_NOTIFIED,
   CACHE_KEY_VAL_INSPECTED
 };

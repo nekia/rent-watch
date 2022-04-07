@@ -1,35 +1,6 @@
 const playwright = require('playwright-chromium');
 // const playwright = require('playwright-core')
 
-const SCANNER_PROTO_PATH = __dirname + '/scanroom/scanroom.proto';
-const NOTIFIER_PROTO_PATH = __dirname + '/notification/notification.proto';
-
-const grpc = require('@grpc/grpc-js');
-// 定義ファイル(.protoファイル)の読み込み
-const protoLoader = require('@grpc/proto-loader');
-const packageDefinitionScanner = protoLoader.loadSync(
-  SCANNER_PROTO_PATH,
-  {
-    keepCase: true,
-    longs: String,
-    enums: String,
-    defaults: true,
-    oneofs: true
-  });
-
-const packageDefinitionNotifier = protoLoader.loadSync(
-  NOTIFIER_PROTO_PATH,
-  {
-    keepCase: true,
-    longs: String,
-    enums: String,
-    defaults: true,
-    oneofs: true
-  });
-
-const scanner_proto = grpc.loadPackageDefinition(packageDefinitionScanner).scanroom;
-const notifier_proto = grpc.loadPackageDefinition(packageDefinitionNotifier).notification;
-
 const utils = require('./utils')
 const setting = require('./setting')
 
@@ -42,59 +13,57 @@ const setting = require('./setting')
 // こだわり: 2階以上/南向き/定期借家を含まない
 const checkUrl = 'https://www.linea.co.jp/article/list/type/rent?pre2=1&pmi=10&pma=16&smi=6&sma=&req=&bye=4&name=';
 
-scanRoom = async (context, address, client) => {
+scanRoom = async (context, address) => {
   const roomPage = await utils.getNewPage(context);
+  const nc = await utils.openNConn();
 
-  const notifys = [];
+  // const notifys = [];
   try {
     await roomPage.goto(address);
-    await roomPage.waitForTimeout(1000)
-    let roomLinks = await roomPage.$$('//article[contains(@class, "room-post")]/a')
-    for (let i = 0; i < roomLinks.length; i++ ) {
-      const link = roomLinks[i];
-      const url = await link.getAttribute("href");
-      if (await utils.checkCacheByUrl(url)) {
-        continue
+    // await roomPage.waitForTimeout(1000)
+    let roomLinks = await roomPage.$$('//article[contains(@class, "room-post")]/a').then((roomLinks) => {
+      const promises = [];
+      for (link of roomLinks) {
+        promises.push(link.getAttribute("href"));
       }
+      return Promise.all(promises)
+    })
 
-      const detailObj = await new Promise((resolv, reject) => {
-        client.ScanRoomDetail({ url }, function(err, response) {
-          resolv(response)
-        });
-      });
-      if (detailObj.location.length == 0) {
-        continue;
-      }
-      if (await utils.meetCondition(detailObj)) {
-        notifys.push(detailObj)
-      } else {
-        await utils.addCache(detailObj, utils.CACHE_KEY_VAL_INSPECTED)
-      }
+    for (url of roomLinks) {
+      utils.publishRoom(nc, url)
     }
+    
   } catch (error) {
     console.warn('## Failed to retrieve the room info ##', address, error)
   } finally {
     await roomPage.close();
+    await utils.closeNConn(nc);
   }
-  return notifys
+  return
+  // return notifys
 };
 
-scanBuilding = async (context, page, client) => {
-  const roomLinks = await page.$$('//div[contains(@class, "pc-residence-row")]//a[contains(@class, "arrow")]')
-
-  let notifyRooms = [];
-  const notifys = [];
-  for (let i = 0; i < roomLinks.length; i++ ) {
+scanBuilding = async (context, page) => {
+  const roomLinks = await page.$$('//div[contains(@class, "pc-residence-row")]//a[contains(@class, "arrow")]').then((roomLinks) => {
+    const promises = [];
+    for (link of roomLinks) {
+      promises.push(link.getAttribute("href"));
+    }
+    return Promise.all(promises)
+  })
+  console.log('scanBuilding', roomLinks)
+  // let notifyRooms = [];
+  // const notifys = [];
+  for (pathAddress of roomLinks) {
     try {
-      const link = roomLinks[i];
-      const pathAddress = await link.getAttribute("href");
-      const rooms = await scanRoom(context, pathAddress, client)
-      notifyRooms.push(...rooms)
+      await scanRoom(context, pathAddress)
+      // notifyRooms.push(...rooms)
     } catch (error) {
       console.warn('## Failed to retrieve the building info ##', address, error)
     }
   }
-  return notifyRooms;
+  return;
+  // return notifyRooms;
 };
 
 pagenation = async (page) => {
@@ -117,24 +86,19 @@ pagenation = async (page) => {
 
 (async () => {
 
-  const clientScanner = new scanner_proto.Scanner('127.0.0.1:50051',
-    grpc.credentials.createInsecure());
-  const clientNotifier = new notifier_proto.Notifier('127.0.0.1:50052',
-    grpc.credentials.createInsecure());
-
   const browser = await playwright['chromium'].launch({ headless: true });
   const context = await utils.getNewContext(browser);
   let page = await utils.getNewPage(context);
 
-  let notifyRooms = [];
+  // let notifyRooms = [];
   console.log(`##### Start - Linea`);
   await page.goto(checkUrl);
   await page.waitForTimeout(1000)
 
   while (1) {
-    const rooms = await scanBuilding(context, page, clientScanner)
+    await scanBuilding(context, page)
 
-    notifyRooms.push(...rooms)
+    // notifyRooms.push(...rooms)
 
     if (utils.getNewPageCount() > setting.MAX_NEW_PAGE_COUNT) {
       console.log('Reached max new page count', utils.getNewPageCount())
@@ -150,13 +114,6 @@ pagenation = async (page) => {
     }
     await page.waitForTimeout(5000)
   }
-
-  const response = await new Promise((resolv, reject) => {
-    clientNotifier.Notify( { rooms: notifyRooms }, function(err, response) {
-      console.log('Completed Notify', response.status)
-      resolv(response)
-    });
-  })
 
   console.log(`##### Done - Linea`);
 
