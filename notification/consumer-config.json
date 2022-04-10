@@ -1,0 +1,10 @@
+{
+  "ack_policy": "explicit",
+  "ack_wait": 30000000000,
+  "deliver_policy": "all",
+  "durable_name": "my_consumer",
+  "max_ack_pending": 20000,
+  "max_deliver": -1,
+  "max_waiting": 512,
+  "replay_policy": "instant"
+}

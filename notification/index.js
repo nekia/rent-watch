@@ -1,8 +1,8 @@
 const protoLoader = require('@grpc/proto-loader');
 const grpc = require('@grpc/grpc-js');
 
-const setting = require('../setting')
-const utils = require('../utils')
+const setting = require('./setting')
+const utils = require('./utils')
 
 const NOTIFIER_PROTO_PATH = __dirname + '/notification.proto';
 

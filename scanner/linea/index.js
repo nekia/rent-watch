@@ -2,9 +2,9 @@ const playwright = require('playwright-chromium');
 const protoLoader = require('@grpc/proto-loader');
 const grpc = require('@grpc/grpc-js');
 
-const utils = require('../utils')
+const utils = require('./utils')
 
-const SCANNER_PROTO_PATH = __dirname + '/scanroom.proto'
+const SCANNER_PROTO_PATH = __dirname + '/protobuf/scanner.proto'
 
 const packageDefinition = protoLoader.loadSync(
   SCANNER_PROTO_PATH,
@@ -15,7 +15,7 @@ const packageDefinition = protoLoader.loadSync(
     defaults: true,
     oneofs: true
   });
-const hello_proto = grpc.loadPackageDefinition(packageDefinition).scanroom;
+const clientScanner = grpc.loadPackageDefinition(packageDefinition).scanner;
 
 ScanRoomDetail = async (call, callback) => {
   const browser = await playwright['chromium'].launch({ headless: true });
@@ -94,8 +94,8 @@ getBuiltYear = async (page) => {
 
 function main() {
   const server = new grpc.Server();
-  server.addService(hello_proto.Scanner.service, { ScanRoomDetail });
-  server.bindAsync('127.0.0.1:50051', grpc.ServerCredentials.createInsecure(), () => {
+  server.addService(clientScanner.Scanner.service, { ScanRoomDetail });
+  server.bindAsync('0.0.0.0:50051', grpc.ServerCredentials.createInsecure(), () => {
     server.start();
   });
 }

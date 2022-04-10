@@ -1,8 +1,6 @@
 const playwright = require('playwright-chromium');
-// const playwright = require('playwright-core')
 
 const utils = require('./utils')
-const setting = require('./setting')
 
 // エリア: 千代田区/新宿区/文京区/目黒区/世田谷区/渋谷区/中野区/杉並区/豊島区/港区
 // エリア: 東京都下
@@ -20,7 +18,6 @@ scanRoom = async (context, address) => {
   // const notifys = [];
   try {
     await roomPage.goto(address);
-    // await roomPage.waitForTimeout(1000)
     let roomLinks = await roomPage.$$('//article[contains(@class, "room-post")]/a').then((roomLinks) => {
       const promises = [];
       for (link of roomLinks) {
@@ -52,18 +49,14 @@ scanBuilding = async (context, page) => {
     return Promise.all(promises)
   })
   console.log('scanBuilding', roomLinks)
-  // let notifyRooms = [];
-  // const notifys = [];
   for (pathAddress of roomLinks) {
     try {
       await scanRoom(context, pathAddress)
-      // notifyRooms.push(...rooms)
     } catch (error) {
-      console.warn('## Failed to retrieve the building info ##', address, error)
+      console.warn('## Failed to retrieve the building info ##', pathAddress, error)
     }
   }
   return;
-  // return notifyRooms;
 };
 
 pagenation = async (page) => {
@@ -90,20 +83,12 @@ pagenation = async (page) => {
   const context = await utils.getNewContext(browser);
   let page = await utils.getNewPage(context);
 
-  // let notifyRooms = [];
   console.log(`##### Start - Linea`);
   await page.goto(checkUrl);
   await page.waitForTimeout(1000)
 
   while (1) {
     await scanBuilding(context, page)
-
-    // notifyRooms.push(...rooms)
-
-    if (utils.getNewPageCount() > setting.MAX_NEW_PAGE_COUNT) {
-      console.log('Reached max new page count', utils.getNewPageCount())
-      break
-    }
 
     // Pagenation
     const { nextPageExist,  nextPage } = await pagenation(page)
@@ -119,5 +104,4 @@ pagenation = async (page) => {
 
   await page.close()
   await browser.close();
-  await utils.disconnectCache()
 })();

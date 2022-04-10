@@ -1,6 +1,6 @@
 const nats = require('nats');
-const SCANNER_PROTO_PATH = __dirname + '/../scanroom/scanroom.proto';
-const NOTIFIER_PROTO_PATH = __dirname + '/../notification/notification.proto';
+const SCANNER_PROTO_PATH = __dirname + '/../protobuf/scanner.proto';
+const NOTIFIER_PROTO_PATH = __dirname + '/../protobuf/notification.proto';
 
 const grpc = require('@grpc/grpc-js');
 // 定義ファイル(.protoファイル)の読み込み
@@ -25,21 +25,25 @@ const packageDefinitionNotifier = protoLoader.loadSync(
     oneofs: true
   });
 
-const scanner_proto = grpc.loadPackageDefinition(packageDefinitionScanner).scanroom;
+const scanner_proto = grpc.loadPackageDefinition(packageDefinitionScanner).scanner;
 const notifier_proto = grpc.loadPackageDefinition(packageDefinitionNotifier).notification;
 
 (async () => {
 
-  const clientScanner = new scanner_proto.Scanner('127.0.0.1:50051',
+  const clientScanner = new scanner_proto.Scanner('host.docker.internal:50051',
     grpc.credentials.createInsecure());
-  const clientNotifier = new notifier_proto.Notifier('127.0.0.1:50052',
+  const clientNotifier = new notifier_proto.Notifier('host.docker.internal:50052',
     grpc.credentials.createInsecure());
+  
 
   // to create a connection to a nats-server:
-  const nc = await nats.connect({ servers: "localhost:4222" });
+  const nc = await nats.connect({ servers: "host.docker.internal:4222" });
+
+  const js = nc.jetstream();
 
   // create a codec
   const sc = nats.StringCodec();
+  const jc = nats.JSONCodec();
   // create a simple subscriber and iterate over messages
   // matching the subscription
   const sub = nc.subscribe("rooms");
@@ -57,6 +61,7 @@ const notifier_proto = grpc.loadPackageDefinition(packageDefinitionNotifier).not
         });
       });
       console.log(detailObj)
+      js.publish("roomdetails", jc.encode(detailObj))
       // if (detailObj.location.length == 0) {
       //   continue;
       // }

@@ -11,9 +11,10 @@
   "dependencies": {
     "@grpc/grpc-js": "^1.6.2",
     "@grpc/proto-loader": "^0.6.9",
-    "axios": "^0.21.1",
-    "ioredis": "^4.28.0",
+    "axios": "^0.21.4",
+    "ioredis": "^4.28.5",
     "nats": "^2.6.1",
-    "playwright-chromium": "^1.20.2"
+    "playwright-chromium": "^1.20.2",
+    "querystring": "^0.2.1"
   }
 }

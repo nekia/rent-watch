@@ -2,7 +2,7 @@
 syntax = "proto3";
 
 // パッケージを指定
-package scanroom;
+package scanner;
 
 // サービスを定義
 service Scanner {
