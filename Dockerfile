@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/playwright:v1.16.3
+FROM mcr.microsoft.com/playwright:v1.20
 
 COPY . /usr/src/app/
 

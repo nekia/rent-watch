@@ -1,8 +1,10 @@
 const nats = require('nats');
 
+const nats_server_name = process.env.NATS_SERVER_NAME ? process.env.NATS_SERVER_NAME : "127.0.0.1";
+
 openNConn = () => {
   // to create a connection to a nats-server:
-  return nats.connect({ servers: "host.docker.internal:4222" });
+  return nats.connect({ servers: `${nats_server_name}:4222` });
 }
 
 publishRoom = (nc, url) => {

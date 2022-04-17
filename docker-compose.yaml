@@ -1,11 +1,33 @@
 version: "3"
-volumes:
-  redisdata:
 services:
-  redis:
-    image: "redis:latest"
+  scanner:
+    image: "nekia/scanner-linea:1.0.0"
     restart: always
-    volumes:
-    - redisdata:/data
+  # crawler:
+  #   image: "nekia/crawler-linea:1.0.0"
+  #   environment:
+  #     - NATS_SERVER_NAME=nats-server
+  mediator:
+    image: "nekia/mediator:1.0.0"
     ports:
-    - "6379:6379"
+      - 50051:50051
+    environment:
+      - GRPC_SCANNER_NAME=scanner
+      - NATS_SERVER_NAME=nats-server
+    depends_on:
+      - scanner
+      - nats-server
+  notifier:
+    image: "nekia/notifier:1.0.0"
+    environment:
+      - NATS_SERVER_NAME=nats-server
+    depends_on:
+      - nats-server
+      - mediator
+  nats-server:
+    image: "nats:2.7.4"
+    ports:
+      - 4222:4222
+      - 6222:6222
+      - 8222:8222
+    command: -js

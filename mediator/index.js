@@ -2,6 +2,9 @@ const nats = require('nats');
 const SCANNER_PROTO_PATH = __dirname + '/../protobuf/scanner.proto';
 const NOTIFIER_PROTO_PATH = __dirname + '/../protobuf/notification.proto';
 
+const grpc_scanner_name = process.env.GRPC_SCANNER_NAME ? process.env.GRPC_SCANNER_NAME : "127.0.0.1";
+const nats_server_name = process.env.NATS_SERVER_NAME ? process.env.NATS_SERVER_NAME : "127.0.0.1";
+
 const grpc = require('@grpc/grpc-js');
 // 定義ファイル(.protoファイル)の読み込み
 const protoLoader = require('@grpc/proto-loader');
@@ -26,18 +29,15 @@ const packageDefinitionNotifier = protoLoader.loadSync(
   });
 
 const scanner_proto = grpc.loadPackageDefinition(packageDefinitionScanner).scanner;
-const notifier_proto = grpc.loadPackageDefinition(packageDefinitionNotifier).notification;
 
 (async () => {
-
-  const clientScanner = new scanner_proto.Scanner('host.docker.internal:50051',
+  console.log('grpc_scanner_name', grpc_scanner_name)
+  console.log('nats_server_name', nats_server_name)
+  const clientScanner = new scanner_proto.Scanner(`${grpc_scanner_name}:50051`,
     grpc.credentials.createInsecure());
-  const clientNotifier = new notifier_proto.Notifier('host.docker.internal:50052',
-    grpc.credentials.createInsecure());
-  
 
   // to create a connection to a nats-server:
-  const nc = await nats.connect({ servers: "host.docker.internal:4222" });
+  const nc = await nats.connect({ servers: `${nats_server_name}:4222` });
 
   const js = nc.jetstream();
 

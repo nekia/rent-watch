@@ -1,41 +1,49 @@
-const protoLoader = require('@grpc/proto-loader');
-const grpc = require('@grpc/grpc-js');
-
-const setting = require('./setting')
 const utils = require('./utils')
 
-const NOTIFIER_PROTO_PATH = __dirname + '/notification.proto';
+const nats = require('nats');
+// 定義ファイル(.protoファイル)の読み込み
 
-const packageDefinition = protoLoader.loadSync(
-  NOTIFIER_PROTO_PATH,
-  {
-    keepCase: true,
-    longs: String,
-    enums: String,
-    defaults: true,
-    oneofs: true
-  });
-const notifier_proto = grpc.loadPackageDefinition(packageDefinition).notification;
+const nats_server_name = process.env.NATS_SERVER_NAME ? process.env.NATS_SERVER_NAME : "127.0.0.1";
 
-Notify = async (call, callback) => {
-  const notifyRooms = call.request.rooms;
-  for (let i = 0; i < notifyRooms.length && i < setting.MAX_NOTIFIES_AT_ONCE; i++) {
-    const key = utils.createKeyFromDetail(notifyRooms[i])
-    if (!await utils.checkCacheByKey(key)) {
-      await utils.notifyLine(notifyRooms[i])
-      console.log('Notified (Paased redundant check)', key)
-    }
-    await utils.addCache(notifyRooms[i], utils.CACHE_KEY_VAL_NOTIFIED)
+(async () => {
+
+  // to create a connection to a nats-server:
+  const nc = await nats.connect({ servers: `${nats_server_name}:4222` });
+
+  const js = nc.jetstream();
+
+  // create a codec
+  const sc = nats.StringCodec();
+  const jc = nats.JSONCodec();
+
+  while (1) {
+    let msgs = js.fetch("mystream", "myconsumer", { batch: 10, expires: 60000 });
+    console.log('fetched')
+    const done = (async () => {
+      const roomsToBeNotified = [];
+      for await (const m of msgs) {
+        // do something with the message
+        // and if the consumer is not set to auto-ack, ack!
+        const detailObj = jc.decode(m.data)
+        if (!detailObj) {
+          console.log('Null')
+          m.ack();
+          continue
+        }
+
+        console.log(`[${msgs.getProcessed()}]:`, detailObj.address)
+        if (await utils.meetCondition(detailObj)) {
+          roomsToBeNotified.push(detailObj)
+        }
+        m.ack();
+      }
+      console.log('Completed fetch', roomsToBeNotified)
+    })();
+
+    // The iterator completed
+    await done;
+    console.log('Completed iteration')
   }
-  callback(null, { status: "OK" });
-};
 
-function main() {
-  const server = new grpc.Server();
-  server.addService(notifier_proto.Notifier.service, { Notify });
-  server.bindAsync('127.0.0.1:50052', grpc.ServerCredentials.createInsecure(), () => {
-    server.start();
-  });
-}
-
-main();
+  utils.disconnectCache()
+})()

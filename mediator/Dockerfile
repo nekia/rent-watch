@@ -18,4 +18,4 @@ RUN arch=$(arch | sed s/aarch64/arm64/ | sed s/x86_64/amd64/) && \
 RUN npm i
 
 # script実行
-CMD nats --server=nats://host.docker.internal:4222 stream add my_stream --config stream-config.json; bash -c "npm start"
+CMD nats --server=nats://nats-server:4222 stream add mystream --config stream-config.json; bash -c "npm start"
