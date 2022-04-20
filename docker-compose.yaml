@@ -1,18 +1,20 @@
 version: "3"
 services:
-  scanner:
-    image: "nekia/scanner-linea:1.0.0"
-    restart: always
   # crawler:
   #   image: "nekia/crawler-linea:1.0.0"
-  #   environment:
-  #     - NATS_SERVER_NAME=nats-server
+  scanner:
+    image: "nekia/scanner-linea:1.0.0"
+    deploy:
+      replicas: 3
+    environment:
+      - NATS_SERVER_NAME=nats-server
+    depends_on:
+      - nats-server
   mediator:
     image: "nekia/mediator:1.0.0"
     ports:
       - 50051:50051
     environment:
-      - GRPC_SCANNER_NAME=scanner
       - NATS_SERVER_NAME=nats-server
     depends_on:
       - scanner

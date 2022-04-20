@@ -1,28 +1,17 @@
+const nats = require('nats');
 const playwright = require('playwright-chromium');
-const protoLoader = require('@grpc/proto-loader');
-const grpc = require('@grpc/grpc-js');
+const express = require('express');
+const http = require('http');
 
 const utils = require('./utils')
 
-const SCANNER_PROTO_PATH = __dirname + '/protobuf/scanner.proto'
+const nats_server_name = process.env.NATS_SERVER_NAME ? process.env.NATS_SERVER_NAME : "127.0.0.1";
 
-const packageDefinition = protoLoader.loadSync(
-  SCANNER_PROTO_PATH,
-  {
-    keepCase: true,
-    longs: String,
-    enums: String,
-    defaults: true,
-    oneofs: true
-  });
-const clientScanner = grpc.loadPackageDefinition(packageDefinition).scanner;
-
-ScanRoomDetail = async (call, callback) => {
+ScanRoomDetail = async (address) => {
   const browser = await playwright['chromium'].launch({ headless: true });
   const context = await utils.getNewContext(browser);
   const roomPage = await utils.getNewPage(context);
   let price = 0.0, size = 0.0, floorLevel = {}, location = "", builtYear = 0;
-  const address = call.request.url;
   console.log(address)
   try {
     await roomPage.goto(address);
@@ -39,7 +28,7 @@ ScanRoomDetail = async (call, callback) => {
   }
   await roomPage.close()
   await browser.close();
-  callback(null, { address, price, size, floorLevel, location, builtYear });
+  return { address, price, size, floorLevel, location, builtYear };
 };
 
 getPriceFloat = async (page) => {
@@ -92,12 +81,66 @@ getBuiltYear = async (page) => {
     })
 }
 
-function main() {
-  const server = new grpc.Server();
-  server.addService(clientScanner.Scanner.service, { ScanRoomDetail });
-  server.bindAsync('0.0.0.0:50051', grpc.ServerCredentials.createInsecure(), () => {
-    server.start();
-  });
-}
+(async () => {
+  const app = express();
+  const router = express.Router();
 
-main();
+  router.use((req, res, next) => {
+    res.header('Access-Control-Allow-Methods', 'GET');
+    next();
+  });
+
+  router.get('/health', (req, res) => {
+    const data = {
+      uptime: process.uptime(),
+      message: 'Ok',
+      date: new Date()
+    }
+  
+    res.status(200).send(data);
+  });
+
+  app.use('/api/v1', router);
+
+  const server = http.createServer(app);
+  server.listen(3000);
+
+  const nc = await nats.connect({ servers: `${nats_server_name}:4222` });
+  const js = nc.jetstream();
+
+  // create a codec
+  const sc = nats.StringCodec();
+  const jc = nats.JSONCodec();
+  // create a simple subscriber and iterate over messages
+  // matching the subscription
+  const sub = nc.subscribe("room-linea", { queue: "room" });
+  (async () => {
+    for await (const m of sub) {
+      const address = sc.decode(m.data);
+      console.log(`[${sub.getProcessed()}]: ${address}`);
+      // if (await utils.checkCacheByUrl(address)) {
+      //   continue
+      // }
+
+      const detailObj = await ScanRoomDetail(address);
+      console.log(detailObj)
+      js.publish("roomdetails", jc.encode(detailObj))
+      // if (detailObj.location.length == 0) {
+      //   continue;
+      // }
+      // if (await utils.meetCondition(detailObj)) {
+      //   notifys.push(detailObj)
+      // } else {
+      //   await utils.addCache(detailObj, utils.CACHE_KEY_VAL_INSPECTED)
+      // }
+
+      // const response = await new Promise((resolv, reject) => {
+      //   clientNotifier.Notify( { rooms: notifyRooms }, function(err, response) {
+      //     console.log('Completed Notify', response.status)
+      //     resolv(response)
+      //   });
+      // })
+    }
+    console.log("subscription closed");
+  })();
+})();
