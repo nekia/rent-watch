@@ -3,14 +3,25 @@ const playwright = require('playwright-chromium');
 const express = require('express');
 const http = require('http');
 
-const utils = require('./utils')
+const nats_server_url = process.env.NATS_SERVER_URL ? process.env.NATS_SERVER_URL : "127.0.0.1:4222";
 
-const nats_server_name = process.env.NATS_SERVER_NAME ? process.env.NATS_SERVER_NAME : "127.0.0.1";
+getNewContext = async (browser) => {
+  const ctx = await browser.newContext({
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4595.0 Safari/537.36',
+    ignoreHTTPSErrors: true
+  });
+  await ctx.setDefaultTimeout(60000)
+  return ctx;
+}
+
+getNewPage = async (context) => {
+  return context.newPage()
+}
 
 ScanRoomDetail = async (address) => {
   const browser = await playwright['chromium'].launch({ headless: true });
-  const context = await utils.getNewContext(browser);
-  const roomPage = await utils.getNewPage(context);
+  const context = await getNewContext(browser);
+  const roomPage = await getNewPage(context);
   let price = 0.0, size = 0.0, floorLevel = {}, location = "", builtYear = 0;
   console.log(address)
   try {
@@ -105,7 +116,7 @@ getBuiltYear = async (page) => {
   const server = http.createServer(app);
   server.listen(3000);
 
-  const nc = await nats.connect({ servers: `${nats_server_name}:4222` });
+  const nc = await nats.connect({ servers: nats_server_url });
   const js = nc.jetstream();
 
   // create a codec
@@ -118,21 +129,10 @@ getBuiltYear = async (page) => {
     for await (const m of sub) {
       const address = sc.decode(m.data);
       console.log(`[${sub.getProcessed()}]: ${address}`);
-      // if (await utils.checkCacheByUrl(address)) {
-      //   continue
-      // }
 
       const detailObj = await ScanRoomDetail(address);
       console.log(detailObj)
       js.publish("roomdetails", jc.encode(detailObj))
-      // if (detailObj.location.length == 0) {
-      //   continue;
-      // }
-      // if (await utils.meetCondition(detailObj)) {
-      //   notifys.push(detailObj)
-      // } else {
-      //   await utils.addCache(detailObj, utils.CACHE_KEY_VAL_INSPECTED)
-      // }
 
       // const response = await new Promise((resolv, reject) => {
       //   clientNotifier.Notify( { rooms: notifyRooms }, function(err, response) {

@@ -1,0 +1,14 @@
+{
+  "detail": {
+    "address": "https://www.linea.co.jp/article/room/type/rent/id/416/rid/3543?sort=",
+    "price": 21.8,
+    "size": 65.81,
+    "floorLevel": {
+      "floorLevel": 5,
+      "floorTopLevel": 5
+    },
+    "location": "東京都新宿区早稲田鶴巻町",
+    "builtYear": 2013
+  },
+  "mode": 1
+}

@@ -1,6 +1,14 @@
+const grpc = require('@grpc/grpc-js');
 const playwright = require('playwright-chromium');
+const nats = require('nats');
 
-const utils = require('./utils')
+const messages = require('./generated/cacheMgr_pb');
+const services = require('./generated/cacheMgr_grpc_pb');
+
+const nats_server_url = process.env.NATS_SERVER_URL ? process.env.NATS_SERVER_URL : "127.0.0.1:4222";
+const cache_mgr_url = process.env.CACHE_MGR_URL ? process.env.CACHE_MGR_URL : "127.0.0.1:50051";
+
+const clientCacheMgr = new services.CacheMgrClient(cache_mgr_url, grpc.credentials.createInsecure());
 
 // エリア: 千代田区/新宿区/文京区/目黒区/世田谷区/渋谷区/中野区/杉並区/豊島区/港区
 // エリア: 東京都下
@@ -11,9 +19,47 @@ const utils = require('./utils')
 // こだわり: 2階以上/南向き/定期借家を含まない
 const checkUrl = 'https://www.linea.co.jp/article/list/type/rent?pre2=1&pmi=10&pma=16&smi=6&sma=&req=&bye=4&name=';
 
+openNConn = () => {
+  // to create a connection to a nats-server:
+  return nats.connect({ servers: nats_server_url });
+}
+
+publishRoom = (nc, url) => {
+  const sc = nats.StringCodec();
+  nc.publish("rooms", sc.encode(url));
+}
+
+closeNConn = async (nc) => {
+  await nc.drain()
+}
+
+getNewContext = async (browser) => {
+  const ctx = await browser.newContext({
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4595.0 Safari/537.36',
+    ignoreHTTPSErrors: true
+  });
+  await ctx.setDefaultTimeout(60000)
+  return ctx;
+}
+
+getNewPage = async (context) => {
+  return context.newPage()
+}
+
+checkCacheByUrl = async (url) => {
+  return new Promise((resolv, reject) => {
+    const request = new messages.CheckCacheByUrlRequest();
+    request.setUrl(url);
+    clientCacheMgr.checkCacheByUrl( request, function(err, response) {
+      console.log('Completed checkCacheByUrl', response.getResult())
+      resolv(response.getResult() != messages.CacheStatus.NOT_CACHED)
+    });
+  });
+}
+
 scanRoom = async (context, address) => {
-  const roomPage = await utils.getNewPage(context);
-  const nc = await utils.openNConn();
+  const roomPage = await getNewPage(context);
+  const nc = await openNConn();
 
   // const notifys = [];
   try {
@@ -27,14 +73,17 @@ scanRoom = async (context, address) => {
     })
 
     for (url of roomLinks) {
-      utils.publishRoom(nc, url)
+      if (await checkCacheByUrl(url)) {
+        continue
+      }
+      publishRoom(nc, url)
     }
     
   } catch (error) {
     console.warn('## Failed to retrieve the room info ##', address, error)
   } finally {
     await roomPage.close();
-    await utils.closeNConn(nc);
+    await closeNConn(nc);
   }
   return
   // return notifys
@@ -80,8 +129,8 @@ pagenation = async (page) => {
 (async () => {
 
   const browser = await playwright['chromium'].launch({ headless: true });
-  const context = await utils.getNewContext(browser);
-  let page = await utils.getNewPage(context);
+  const context = await getNewContext(browser);
+  let page = await getNewPage(context);
 
   console.log(`##### Start - Linea`);
   await page.goto(checkUrl);

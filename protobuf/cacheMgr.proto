@@ -1,0 +1,69 @@
+// Protocol Buffersのバージョンを指定
+syntax = "proto3";
+
+// パッケージを指定
+package cacheMgr;
+
+// サービスを定義
+service CacheMgr {
+  // 引数の型：HelloRequestメッセージ
+  // 戻り値の型：HelloReplyメッセージ
+  rpc CheckCacheByUrl (CheckCacheByUrlRequest) returns (CheckCacheByUrlResponse);
+  rpc CheckCacheByDetail (CheckCacheByDetailRequest) returns (CheckCacheByDetailResponse);
+  rpc AddCache (AddCacheRequest) returns (AddCacheResponse);
+}
+
+message CheckCacheByUrlRequest {
+  string url = 1;
+}
+
+message CheckCacheByUrlResponse {
+  CacheStatus result = 1;
+}
+
+message CheckCacheByDetailRequest {
+  RoomDetail detail = 1;
+}
+
+message CheckCacheByDetailResponse {
+  CacheStatus result = 1;
+}
+
+message AddCacheRequest {
+  RoomDetail detail = 1;
+  CacheMode mode = 2;
+}
+
+message AddCacheResponse {
+}
+
+enum CacheStatus {
+  NOT_CACHED = 0;
+  ALREADY_NOTIFIED = 1;
+  ALREADY_INSPECTED = 2;
+}
+
+enum CacheMode {
+  UNUSED = 0;
+  NOTIFIED = 1;
+  INSPECTED = 2;
+}
+
+enum CacheResult {
+  SUCCESS = 0;
+  FAIL = 1;
+}
+
+message RoomDetail {
+  string address = 1;
+  double price = 2;
+  double size = 3;
+  FloorLevel floorLevel = 4;
+  string location = 5;
+  int32 builtYear = 6;
+}
+
+message FloorLevel {
+  int32 floorLevel = 1;
+  int32 floorTopLevel = 2;
+}

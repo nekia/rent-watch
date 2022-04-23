@@ -8,9 +8,38 @@ REGISTRY_URL=192.168.2.133:32608
 
 # docker buildx create --use --name myapp --driver docker-container --config ./buildkitd.toml
 
-build_all: scanner-linea crawler-linea mediator
+# Makefile
+NPM_BIN=$(shell npm bin)
+GRPC_TOOL=$(NPM_BIN)/grpc_tools_node_protoc
 
-push_all: scanner-linea.arm64 crawler-linea.arm64 mediator.arm64 notifier.arm64
+protogen: protogen.crawler-linea protogen.notifier protogen.cache-mgr
+
+protogen.crawler-linea:
+	rm -rf crawler/linea/generated
+	mkdir -p crawler/linea/generated
+	$(GRPC_TOOL) --js_out=import_style=commonjs,binary:crawler/linea/generated \
+		--grpc_out=grpc_js:crawler/linea/generated \
+		--proto_path=protobuf \
+		./protobuf/cacheMgr.proto
+
+protogen.notifier:
+	rm -rf notification/generated
+	mkdir -p notification/generated
+	$(GRPC_TOOL) --js_out=import_style=commonjs,binary:notification/generated \
+		--grpc_out=grpc_js:notification/generated \
+		--proto_path=protobuf \
+		./protobuf/cacheMgr.proto
+
+protogen.cache-mgr:
+	rm -rf cacheMgr/generated
+	mkdir -p cacheMgr/generated
+	$(GRPC_TOOL) --js_out=import_style=commonjs,binary:cacheMgr/generated \
+		--grpc_out=grpc_js:cacheMgr/generated \
+		--proto_path=protobuf \
+		./protobuf/cacheMgr.proto
+
+build_all: scanner-linea crawler-linea mediator notifier cache-mgr
+push_all: scanner-linea.arm64 crawler-linea.arm64 mediator.arm64 notifier.arm64 cache-mgr.arm64
 
 scanner-linea:
 	cd scanner/linea && \
@@ -20,11 +49,11 @@ scanner-linea.arm64:
 	cd scanner/linea && \
 	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(IMAGE_PATH)/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
-crawler-linea:
+crawler-linea: protogen.crawler-linea
 	cd crawler/linea && \
 	$(DOCKER_BUILD) -t $(IMAGE_PATH)/$@:$(COMMIT_HASH)
 
-crawler-linea.arm64:
+crawler-linea.arm64: protogen.crawler-linea
 	cd crawler/linea && \
 	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(IMAGE_PATH)/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
@@ -36,13 +65,21 @@ mediator.arm64:
 	cd mediator && \
 	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(IMAGE_PATH)/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
-notifier:
+notifier: protogen.notifier
 	cd notification && \
 	$(DOCKER_BUILD) -t $(IMAGE_PATH)/$@:$(COMMIT_HASH)
 
-notifier.arm64:
+notifier.arm64: protogen.notifier
 	cd notification && \
 	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(IMAGE_PATH)/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
-.PHONY: scanner-linea scanner-linea.arm64 crawler-linea crawler-linea.arm64 mediator mediator.arm64 notifier notifier.arm64
+cache-mgr: protogen.cache-mgr
+	cd cacheMgr && \
+	$(DOCKER_BUILD) -t $(IMAGE_PATH)/$@:$(COMMIT_HASH)
+
+cache-mgr.arm64: protogen.cache-mgr
+	cd cacheMgr && \
+	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(IMAGE_PATH)/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+
+.PHONY: scanner-linea scanner-linea.arm64 crawler-linea crawler-linea.arm64 mediator mediator.arm64 notifier notifier.arm64 cache-mgr cache-mgr.arm64 protogen
 

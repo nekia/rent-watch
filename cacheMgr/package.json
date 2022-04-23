@@ -1,5 +1,5 @@
 {
-  "name": "notification",
+  "name": "cachemgr",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -12,9 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "@grpc/grpc-js": "^1.6.7",
-    "axios": "^0.26.1",
     "google-protobuf": "^3.20.1",
-    "nats": "^2.6.1",
-    "querystring": "^0.2.1"
+    "ioredis": "^5.0.4"
   }
 }
