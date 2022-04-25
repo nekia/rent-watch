@@ -2,10 +2,18 @@ version: "3"
 services:
   # crawler:
   #   image: "nekia/crawler-linea:1.0.0"
-  scanner:
+  scanner-linea:
     image: "nekia/scanner-linea:1.0.0"
     deploy:
-      replicas: 3
+      replicas: 1
+    environment:
+      - NATS_SERVER_URL=nats-server:4222
+    depends_on:
+      - nats-server
+  scanner-suumo:
+    image: "nekia/scanner-suumo:1.0.0"
+    deploy:
+      replicas: 1
     environment:
       - NATS_SERVER_URL=nats-server:4222
     depends_on:
@@ -22,16 +30,17 @@ services:
       - NATS_SERVER_URL=nats-server:4222
       - CACHE_MGR_URL=cache-mgr:50051
       - LINE_NOTIFY_TOKEN=<YOUR LINE NOTIFY TOKEN>
+      - ENABLE_NOTIFY=0
     depends_on:
       - nats-server
-      - mediator
       - cache-mgr
   cache-mgr:
     image: "nekia/cache-mgr:1.0.0"
     ports:
       - 50051:50051
     environment:
-      - IGNORE_INSPECTED_CACHE=1
+      - IGNORE_INSPECTED_CACHE=0
+      - ENABLE_CACHE=0
       - REDIS_SERVER_URL=redis://192.168.2.132:31951
   nats-server:
     image: "nats:2.7.4"
