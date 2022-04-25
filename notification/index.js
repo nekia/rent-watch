@@ -160,14 +160,15 @@ notify = async (detailObjs) => {
           continue
         }
 
-        if (await CheckCacheByDetail(detailObj)) {
-          m.ack()
-          continue
-        }
-
         console.log(`[${msgs.getProcessed()}]:`, detailObj.address)
         if (await meetCondition(detailObj)) {
-          roomsToBeNotified.push(detailObj)
+
+          if (await CheckCacheByDetail(detailObj)) {
+            console.log('Already notified')
+          } else {
+            roomsToBeNotified.push(detailObj)
+          }
+
           await addCacheNotified(detailObj)
         } else {
           await addCacheInspected(detailObj)
