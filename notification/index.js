@@ -161,6 +161,7 @@ notify = async (detailObjs) => {
         }
 
         if (await CheckCacheByDetail(detailObj)) {
+          m.ack()
           continue
         }
 
