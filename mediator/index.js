@@ -25,6 +25,8 @@ const nats_server_url = process.env.NATS_SERVER_URL ? process.env.NATS_SERVER_UR
         nc.publish("room-linea", sc.encode(url))
       } else if (url.includes("suumo.jp")) {
         nc.publish("room-suumo", sc.encode(url))
+      } else if (url.includes("homes.co.jp")) {
+        nc.publish("room-homes", sc.encode(url))
       }
 
       // const response = await new Promise((resolv, reject) => {

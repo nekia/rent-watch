@@ -40,35 +40,35 @@ scanRoomDetail = async (address) => {
 }
 
 getPriceFloat = async (page) => {
-  const roomPriceElm = await page.$('//div[contains(@class, "property_view_main-emphasis")]')
+  const roomPriceElm = await page.$('//th[text()[contains(., "賃料（管理費等）")]]/following-sibling::td/div/div[1]/span/span')
   const priceStr = await roomPriceElm.innerText();
   const priceWoUnit = priceStr.match(/[\d.]+/);
   return parseFloat(priceWoUnit[0])
 }
 
 getSizeFloat = async (page) => {
-  const roomSizeElm = await page.$('//div[text()[contains(., "専有面積")]]/following-sibling::div[contains(@class, "property_data-body")]')
+  const roomSizeElm = await page.$('//span[text()[contains(., "専有面積")]]/parent::*/following-sibling::dd[1]')
   const roomSizeStr = await roomSizeElm.innerText()
   const roomSizeNoUnit = roomSizeStr.match(/[\d.]+/);
   return parseFloat(roomSizeNoUnit[0])
 }
 
 getFloorLevel = async (page) => {
-  // 階建 | 8階/地下2地上31階建
-  const floorLevel = await page.$('//th[text()[contains(., "階建")]]/following-sibling::td[1]')
+  // 所在階 / 階数 | 2階 / 12階建 (地下1階)
+  const floorLevel = await page.$('//th[text()[contains(., "所在階 / 階数")]]/following-sibling::td[1]')
   const floorLevelStr = await floorLevel.innerText()
-  const floorLevelNoUnit = floorLevelStr.match(/[\d.]+/g);
-  return { floorLevel: parseInt(floorLevelNoUnit[0]), floorTopLevel: parseInt(floorLevelNoUnit[floorLevelNoUnit.length - 1])}
+  const floorLevelNoUnit = floorLevelStr.match(/[\d]+/g);
+  return { floorLevel: parseInt(floorLevelNoUnit[0]), floorTopLevel: parseInt(floorLevelNoUnit[1])}
 }
 
 getLocation = async (page) => {
-  const address = await page.$('//div[contains(@class, "property_view_detail--location")]/div[contains(@class, "property_view_detail-body")]/div')
-  const addressStr = await address.innerText().then( result => result.trim() );
+  const address = await page.$('//span[text()[contains(., "所在地")]]/parent::*/following-sibling::dd[1]')
+  const addressStr = await address.innerText().then( result => result.trim().split('\n')[0] );
   return addressStr
 }
 
 getBuiltYear = async (page) => {
-  const builtYrElm = await page.$('//th[text()="築年月"]/following-sibling::td[1]')
+  const builtYrElm = await page.$('//dd[@id="chk-bkc-kenchikudate"]')
   return builtYrElm.innerText().then( (result) => {
     const builtYrStr = result.match(/(\d+)年/)
     return parseInt(builtYrStr[1])
@@ -107,7 +107,7 @@ getBuiltYear = async (page) => {
   const jc = nats.JSONCodec();
   // create a simple subscriber and iterate over messages
   // matching the subscription
-  const sub = nc.subscribe("room-suumo", { queue: "room" });
+  const sub = nc.subscribe("room-homes", { queue: "room" });
   (async () => {
     for await (const m of sub) {
       const address = sc.decode(m.data);

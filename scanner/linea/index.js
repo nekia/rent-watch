@@ -34,9 +34,8 @@ ScanRoomDetail = async (address) => {
     builtYear = await getBuiltYear(roomPage)
   } catch (error) {
     console.warn('## Failed to retrieve the detail ##', address, error)
-  } finally {
-    await roomPage.close();
   }
+  
   await roomPage.close()
   await browser.close();
   return { address, price, size, floorLevel, location, builtYear };

@@ -1,3 +1,4 @@
 node_modules
 *.png
 generated
+package-lock.json
