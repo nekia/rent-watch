@@ -1,6 +1,7 @@
 {
   "subjects": [
-    "roomdetails"
+    "roomdetails-tky-rent",
+    "roomdetails-ngy-rent"
   ],
   "retention": "workqueue",
   "max_consumers": -1,
