@@ -1,0 +1,8 @@
+{
+  "max_room_price": 23,
+  "min_room_size": 50,
+  "min_floor_level": 2,
+  "max_building_age": 35,
+  "max_notifies_at_once": 200,
+  "enable_notify": true
+}

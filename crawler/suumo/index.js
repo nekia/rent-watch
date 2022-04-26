@@ -2,6 +2,7 @@ const grpc = require('@grpc/grpc-js');
 const playwright = require('playwright-chromium');
 const nats = require('nats');
 
+const setting = require('./setting/setting.json');
 const messages = require('./generated/cacheMgr_pb');
 const services = require('./generated/cacheMgr_grpc_pb');
 
@@ -18,7 +19,7 @@ const clientCacheMgr = new services.CacheMgrClient(cache_mgr_url, grpc.credentia
 // 築年数: 未指定
 // こだわり: 2階以上/南向き/定期借家含まない
 // 情報の公開日: 本日の新着物件
-const checkUrl = 'https://suumo.jp/jj/chintai/ichiran/FR301FC001/?url=%2Fchintai%2Fichiran%2FFR301FC001%2F&ar=030&bs=040&pc=30&smk=&po1=25&po2=99&tc=0401303&tc=0400101&tc=0400104&tc=0401106&shkr1=03&shkr2=03&shkr3=03&shkr4=03&cb=15.0&ct=25.0&et=9999999&mb=55&mt=9999999&cn=9999999&ta=13&sc=13101&sc=13103&sc=13104&sc=13105&sc=13113&sc=13109&sc=13110&sc=13112&sc=13114&sc=13115&sc=13120&sc=13116&sc=13203&sc=13204';
+const checkUrl = setting.url;
 
 openNConn = () => {
   // to create a connection to a nats-server:
@@ -26,8 +27,8 @@ openNConn = () => {
 }
 
 publishRoom = (nc, url) => {
-  const sc = nats.StringCodec();
-  nc.publish("rooms", sc.encode(url));
+  const jc = nats.JSONCodec();
+  nc.publish("rooms", jc.encode({ url: url, mode: setting.mode }));
 }
 
 closeNConn = async (nc) => {

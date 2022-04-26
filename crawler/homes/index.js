@@ -2,6 +2,7 @@ const grpc = require('@grpc/grpc-js');
 const playwright = require('playwright-chromium');
 const nats = require('nats');
 
+const setting = require('./setting/setting.json');
 const messages = require('./generated/cacheMgr_pb');
 const services = require('./generated/cacheMgr_grpc_pb');
 
@@ -18,7 +19,7 @@ const clientCacheMgr = new services.CacheMgrClient(cache_mgr_url, grpc.credentia
 // 築年数: 未指定
 // こだわり: 2階以上/南向き
 // 情報の公開日: 本日
-const checkUrl = 'https://www.homes.co.jp/chintai/imayori/list/?sortBy=%24imayori%3Awantmcf&prefectureId=13&cityIds=13101%2C13103%2C13104%2C13105%2C13109%2C13110%2C13112%2C13113%2C13114%2C13115%2C13116%2C13120%2C13203%2C13204&monthMoneyRoom=15&monthMoneyRoomHigh=30&moneyMaintenanceInclude=1&houseArea=50&newDate=1&mcfs=340501%2C340102&wantMcfs=113601%2C263101%2C293101&needsCodes=15';
+const checkUrl = setting.url;
 
 openNConn = () => {
   // to create a connection to a nats-server:
@@ -26,8 +27,8 @@ openNConn = () => {
 }
 
 publishRoom = (nc, url) => {
-  const sc = nats.StringCodec();
-  nc.publish("rooms", sc.encode(url));
+  const jc = nats.JSONCodec();
+  nc.publish("rooms", jc.encode({ url: url, mode: setting.mode }));
 }
 
 closeNConn = async (nc) => {

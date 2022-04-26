@@ -18,15 +18,19 @@ const nats_server_url = process.env.NATS_SERVER_URL ? process.env.NATS_SERVER_UR
   const sub = nc.subscribe("rooms");
   (async () => {
     for await (const m of sub) {
-      console.log(`[${sub.getProcessed()}]: ${sc.decode(m.data)}`);
-      const url = sc.decode(m.data);
+      const urlObj = jc.decode(m.data);
+      console.log(urlObj)
+      const url = urlObj.url;
+      const mode = urlObj.mode;
+
+      console.log(`[${sub.getProcessed()}]: ${mode} : ${url} `);
 
       if (url.includes("linea.co.jp")) {
-        nc.publish("room-linea", sc.encode(url))
+        nc.publish(`room-linea-${mode}`, sc.encode(url))
       } else if (url.includes("suumo.jp")) {
-        nc.publish("room-suumo", sc.encode(url))
+        nc.publish(`room-suumo-${mode}`, sc.encode(url))
       } else if (url.includes("homes.co.jp")) {
-        nc.publish("room-homes", sc.encode(url))
+        nc.publish(`room-homes-${mode}`, sc.encode(url))
       }
 
       // const response = await new Promise((resolv, reject) => {

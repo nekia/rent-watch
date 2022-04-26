@@ -56,6 +56,12 @@ protogen.cache-mgr:
 		--proto_path=protobuf \
 		./protobuf/cacheMgr.proto
 
+pwbase:
+	$(DOCKER_BUILDX) -f Dockerfile-pwbase --platform linux/amd64 -t ${REGISTRY_URL}/$(IMAGE_PATH)/$@:$(COMMIT_HASH) --push
+
+pwbase.arm64:
+	$(DOCKER_BUILDX) -f Dockerfile-pwbase --platform linux/arm64 -t ${REGISTRY_URL}/$(IMAGE_PATH)/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+
 scanner-linea:
 	cd scanner/linea && \
 	$(DOCKER_BUILD) -t $(IMAGE_PATH)/$@:$(COMMIT_HASH)
@@ -131,5 +137,6 @@ cache-mgr.arm64: protogen.cache-mgr
 .PHONY: scanner-linea scanner-linea.arm64 crawler-linea crawler-linea.arm64 \
 scanner-suumo scanner-suumo.arm64 crawler-suumo crawler-suumo.arm64 \
 scanner-homes scanner-homes.arm64 crawler-homes crawler-homes.arm64 \
-mediator mediator.arm64 notifier notifier.arm64 cache-mgr cache-mgr.arm64 protogen
+mediator mediator.arm64 notifier notifier.arm64 cache-mgr cache-mgr.arm64 protogen \
+pwbase pwbase.arm64
 

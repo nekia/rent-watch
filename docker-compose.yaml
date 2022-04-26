@@ -8,6 +8,8 @@ services:
       replicas: 1
     environment:
       - NATS_SERVER_URL=nats-server:4222
+      - NATS_SUBJECT_ROOMURL=room-linea-tky-rent
+      - NATS_SUBJECT_ROOMDETAIL=roomdetails-tky-rent
     depends_on:
       - nats-server
   scanner-suumo:
@@ -16,6 +18,28 @@ services:
       replicas: 1
     environment:
       - NATS_SERVER_URL=nats-server:4222
+      - NATS_SUBJECT_ROOMURL=room-suumo-tky-rent
+      - NATS_SUBJECT_ROOMDETAIL=roomdetails-tky-rent
+    depends_on:
+      - nats-server
+  scanner-homes:
+    image: "nekia/scanner-homes:1.0.0"
+    deploy:
+      replicas: 1
+    environment:
+      - NATS_SERVER_URL=nats-server:4222
+      - NATS_SUBJECT_ROOMURL=room-homes-tky-rent
+      - NATS_SUBJECT_ROOMDETAIL=roomdetails-tky-rent
+    depends_on:
+      - nats-server
+  scanner-homes-ngy:
+    image: "nekia/scanner-homes:1.0.0"
+    deploy:
+      replicas: 1
+    environment:
+      - NATS_SERVER_URL=nats-server:4222
+      - NATS_SUBJECT_ROOMURL=room-homes-ngy-rent
+      - NATS_SUBJECT_ROOMDETAIL=roomdetails-ngy-rent
     depends_on:
       - nats-server
   mediator:
@@ -34,6 +58,19 @@ services:
     depends_on:
       - nats-server
       - cache-mgr
+  notifier-ngy:
+    image: "nekia/notifier:1.0.0"
+    environment:
+      - NATS_SERVER_URL=nats-server:4222
+      - CACHE_MGR_URL=cache-mgr:50051
+      - LINE_NOTIFY_TOKEN=<YOUR LINE NOTIFY TOKEN>
+      - ENABLE_NOTIFY=1
+    depends_on:
+      - nats-server
+      - cache-mgr
+      - scanner-homes-ngy
+    volumes:
+      - ./notification/setting-ngy-rent:/usr/src/app/setting
   cache-mgr:
     image: "nekia/cache-mgr:1.0.0"
     ports:

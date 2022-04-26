@@ -2,6 +2,7 @@ const grpc = require('@grpc/grpc-js');
 const playwright = require('playwright-chromium');
 const nats = require('nats');
 
+const setting = require('./setting/setting.json');
 const messages = require('./generated/cacheMgr_pb');
 const services = require('./generated/cacheMgr_grpc_pb');
 
@@ -17,7 +18,7 @@ const clientCacheMgr = new services.CacheMgrClient(cache_mgr_url, grpc.credentia
 // 駅徒歩分数: 15分以内
 // 築年数: 20年以内
 // こだわり: 2階以上/南向き/定期借家を含まない
-const checkUrl = 'https://www.linea.co.jp/article/list/type/rent?pre2=1&pmi=10&pma=16&smi=6&sma=&req=&bye=4&name=';
+const checkUrl = setting.url;
 
 openNConn = () => {
   // to create a connection to a nats-server:
@@ -25,8 +26,8 @@ openNConn = () => {
 }
 
 publishRoom = (nc, url) => {
-  const sc = nats.StringCodec();
-  nc.publish("rooms", sc.encode(url));
+  const jc = nats.JSONCodec();
+  nc.publish("rooms", jc.encode({ url: url, mode: setting.mode }));
 }
 
 closeNConn = async (nc) => {

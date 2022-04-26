@@ -4,6 +4,8 @@ const express = require('express');
 const http = require('http');
 
 const nats_server_url = process.env.NATS_SERVER_URL ? process.env.NATS_SERVER_URL : "127.0.0.1:4222";
+const nats_subject_roomurl = process.env.NATS_SUBJECT_ROOMURL ? process.env.NATS_SUBJECT_ROOMURL : "room-homes-tky-rent";
+const nats_subject_roomdetail = process.env.NATS_SUBJECT_ROOMDETAIL ? process.env.NATS_SUBJECT_ROOMDETAIL : "roomdetails-tky-rent";
 
 getNewContext = async (browser) => {
   const ctx = await browser.newContext({
@@ -107,7 +109,7 @@ getBuiltYear = async (page) => {
   const jc = nats.JSONCodec();
   // create a simple subscriber and iterate over messages
   // matching the subscription
-  const sub = nc.subscribe("room-homes", { queue: "room" });
+  const sub = nc.subscribe(nats_subject_roomurl, { queue: "room" });
   (async () => {
     for await (const m of sub) {
       const address = sc.decode(m.data);
@@ -115,7 +117,7 @@ getBuiltYear = async (page) => {
 
       const detailObj = await scanRoomDetail(address);
       console.log(detailObj)
-      js.publish("roomdetails", jc.encode(detailObj))
+      js.publish(nats_subject_roomdetail, jc.encode(detailObj))
 
       // const response = await new Promise((resolv, reject) => {
       //   clientNotifier.Notify( { rooms: notifyRooms }, function(err, response) {

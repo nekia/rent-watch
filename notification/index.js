@@ -3,13 +3,14 @@ const querystring = require('querystring');
 const axios = require('axios');
 const nats = require('nats');
 
+const setting = require('./setting/setting.json');
 const messages = require('./generated/cacheMgr_pb');
 const services = require('./generated/cacheMgr_grpc_pb');
 
-const setting = require('./setting');
-
 const nats_server_url = process.env.NATS_SERVER_URL ? process.env.NATS_SERVER_URL : "127.0.0.1:4222";
 const cache_mgr_url = process.env.CACHE_MGR_URL ? process.env.CACHE_MGR_URL : "127.0.0.1:50051";
+const ENABLE_NOTIFY = process.env.ENABLE_NOTIFY === "1" ? true : 
+  (process.env.ENABLE_NOTIFY === "0" ? false : setting.enable_notify /* default */ );
 
 const clientCacheMgr = new services.CacheMgrClient(cache_mgr_url, grpc.credentials.createInsecure());
 
@@ -53,12 +54,12 @@ addCacheInspected = (detailObj) => {
 
 meetCondition = (detailObj) => {
   console.log('Check if meet the conditions', detailObj.address)
-  if (detailObj.price > setting.MAX_ROOM_PRICE) {
+  if (detailObj.price > setting.max_room_price) {
     console.log('Too expensive!', detailObj.price)
     return false;
   }
 
-  if (detailObj.size < setting.MIN_ROOM_SIZE) {
+  if (detailObj.size < setting.min_room_size) {
     console.log('Too small!', detailObj.size)
     return false;
   }
@@ -68,14 +69,14 @@ meetCondition = (detailObj) => {
     return false;
   }
 
-  if (detailObj.floorLevel.floorLevel < setting.MIN_FLOOR_LEVEL ) {
+  if (detailObj.floorLevel.floorLevel < setting.min_floor_level ) {
     console.log('Too low floor level!', detailObj.floorLevel.floorLevel)
     return false;
   }
 
   if (detailObj.builtYear) {
     const age = new Date().getFullYear() - detailObj.builtYear;
-    if ( age > setting.MAX_BUILDING_AGE ) {
+    if ( age > setting.max_building_age ) {
       console.log('Too old building!', detailObj.builtYear)
       return false;
     }
@@ -115,7 +116,7 @@ CheckCacheByDetail = (detailObj) => {
 }
 
 notifyLine = async (roomObj) => {
-  if (setting.ENABLE_NOTIFY) {
+  if (ENABLE_NOTIFY) {
     console.log(`New room !!`, roomObj.address)
     config.data = querystring.stringify({
       message: `${roomObj.price}万円  ${roomObj.size}平米  ${roomObj.floorLevel.floorLevel}/${roomObj.floorLevel.floorTopLevel}\n${roomObj.location}\n${roomObj.address}`,
