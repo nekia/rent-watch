@@ -1,9 +1,6 @@
 const playwright = require('playwright');
 
 const utils = require('./utils');
-const Homes = require('./index-homes');
-const Suumo = require('./index-suumo');
-const RStore = require('./index-rstore');
 const TPO = require('./index-tpo');
 const BS = require('./index-bs');
 const TD = require('./index-td');
@@ -13,14 +10,11 @@ const setting = require('./setting');
 (async () => {
   const browser = await playwright['chromium'].launch({ headless: true });
   const context = await utils.getNewContext(browser);
-  const homesSite = new Homes(browser, context)
-  const suumoSite = new Suumo(browser, context)
-  const rstoreSite = new RStore(browser, context)
   const tpoSite = new TPO(browser, context)
   const bsSite = new BS(browser, context)
   const tdSite = new TD(browser, context)
   const kenSite = new KEN(browser, context)
-  const searchingSites =  [homesSite, suumoSite, rstoreSite, tpoSite, bsSite, tdSite, kenSite];
+  const searchingSites =  [tpoSite, bsSite, tdSite, kenSite];
 
   let page = await utils.getNewPage(context);
 

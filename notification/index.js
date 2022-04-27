@@ -8,6 +8,9 @@ const messages = require('./generated/cacheMgr_pb');
 const services = require('./generated/cacheMgr_grpc_pb');
 
 const nats_server_url = process.env.NATS_SERVER_URL ? process.env.NATS_SERVER_URL : "127.0.0.1:4222";
+const nats_consumer_name = process.env.NATS_CONSUMER_NAME ? process.env.NATS_CONSUMER_NAME : "myconsumer";
+const nats_consumer_batch_size = process.env.NATS_CONSUMER_BATCH_SIZE ? parseInt(process.env.NATS_CONSUMER_BATCH_SIZE) : 10;
+const nats_consumer_batch_duration = process.env.NATS_CONSUMER_BATCH_DURATION ? parseInt(process.env.NATS_CONSUMER_BATCH_DURATION) : 180000;
 const cache_mgr_url = process.env.CACHE_MGR_URL ? process.env.CACHE_MGR_URL : "127.0.0.1:50051";
 const ENABLE_NOTIFY = process.env.ENABLE_NOTIFY === "1" ? true : 
   (process.env.ENABLE_NOTIFY === "0" ? false : setting.enable_notify /* default */ );
@@ -147,7 +150,7 @@ notify = async (detailObjs) => {
   const jc = nats.JSONCodec();
 
   while (1) {
-    let msgs = js.fetch("mystream", "myconsumer", { batch: 10, expires: 60000 });
+    let msgs = js.fetch("mystream", nats_consumer_name, { batch: nats_consumer_batch_size, expires: nats_consumer_batch_duration });
     console.log('fetched')
     const done = (async () => {
       const roomsToBeNotified = [];

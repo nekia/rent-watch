@@ -118,13 +118,6 @@ getBuiltYear = async (page) => {
       const detailObj = await scanRoomDetail(address);
       console.log(detailObj)
       js.publish(nats_subject_roomdetail, jc.encode(detailObj))
-
-      // const response = await new Promise((resolv, reject) => {
-      //   clientNotifier.Notify( { rooms: notifyRooms }, function(err, response) {
-      //     console.log('Completed Notify', response.status)
-      //     resolv(response)
-      //   });
-      // })
     }
     console.log("subscription closed");
   })();

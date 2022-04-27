@@ -12,9 +12,19 @@ REGISTRY_URL=192.168.2.133:32608
 NPM_BIN=$(shell npm bin)
 GRPC_TOOL=$(NPM_BIN)/grpc_tools_node_protoc
 
-protogen: protogen.crawler-linea protogen.crawler-suumo protogen.crawler-homes protogen.notifier protogen.cache-mgr
-build_all: scanner-linea crawler-linea scanner-suumo crawler-suumo scanner-homes crawler-homes mediator notifier cache-mgr
-push_all: scanner-linea.arm64 crawler-linea.arm64 scanner-suumo.arm64 crawler-suumo.arm64 scanner-homes.arm64 crawler-homes.arm64 mediator.arm64 notifier.arm64 cache-mgr.arm64
+protogen: protogen.crawler-linea protogen.crawler-suumo \
+					protogen.crawler-homes protogen.crawler-rstore \
+					protogen.notifier protogen.cache-mgr
+build_all:  scanner-linea crawler-linea \
+						scanner-suumo crawler-suumo \
+						scanner-homes crawler-homes \
+						scanner-rstore crawler-rstore \
+						mediator notifier cache-mgr
+push_all: scanner-linea.arm64 crawler-linea.arm64 \
+					scanner-suumo.arm64 crawler-suumo.arm64 \
+					scanner-homes.arm64 crawler-homes.arm64 \
+					scanner-rstore.arm64 crawler-rstore.arm64 \
+					mediator.arm64 notifier.arm64 cache-mgr.arm64
 
 protogen.crawler-linea:
 	rm -rf crawler/linea/generated
@@ -37,6 +47,14 @@ protogen.crawler-homes:
 	mkdir -p crawler/homes/generated
 	$(GRPC_TOOL) --js_out=import_style=commonjs,binary:crawler/homes/generated \
 		--grpc_out=grpc_js:crawler/homes/generated \
+		--proto_path=protobuf \
+		./protobuf/cacheMgr.proto
+
+protogen.crawler-rstore:
+	rm -rf crawler/rstore/generated
+	mkdir -p crawler/rstore/generated
+	$(GRPC_TOOL) --js_out=import_style=commonjs,binary:crawler/rstore/generated \
+		--grpc_out=grpc_js:crawler/rstore/generated \
 		--proto_path=protobuf \
 		./protobuf/cacheMgr.proto
 
@@ -86,6 +104,14 @@ scanner-homes.arm64:
 	cd scanner/homes && \
 	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(IMAGE_PATH)/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
+scanner-rstore:
+	cd scanner/rstore && \
+	$(DOCKER_BUILD) -t $(IMAGE_PATH)/$@:$(COMMIT_HASH)
+
+scanner-rstore.arm64:
+	cd scanner/rstore && \
+	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(IMAGE_PATH)/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+
 crawler-linea: protogen.crawler-linea
 	cd crawler/linea && \
 	$(DOCKER_BUILD) -t $(IMAGE_PATH)/$@:$(COMMIT_HASH)
@@ -108,6 +134,14 @@ crawler-homes: protogen.crawler-homes
 
 crawler-homes.arm64: protogen.crawler-homes
 	cd crawler/homes && \
+	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(IMAGE_PATH)/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+
+crawler-rstore: protogen.crawler-rstore
+	cd crawler/rstore && \
+	$(DOCKER_BUILD) -t $(IMAGE_PATH)/$@:$(COMMIT_HASH)
+
+crawler-rstore.arm64: protogen.crawler-rstore
+	cd crawler/rstore && \
 	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(IMAGE_PATH)/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
 mediator:
@@ -135,8 +169,9 @@ cache-mgr.arm64: protogen.cache-mgr
 	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(IMAGE_PATH)/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
 .PHONY: scanner-linea scanner-linea.arm64 crawler-linea crawler-linea.arm64 \
-scanner-suumo scanner-suumo.arm64 crawler-suumo crawler-suumo.arm64 \
-scanner-homes scanner-homes.arm64 crawler-homes crawler-homes.arm64 \
-mediator mediator.arm64 notifier notifier.arm64 cache-mgr cache-mgr.arm64 protogen \
-pwbase pwbase.arm64
+				scanner-suumo scanner-suumo.arm64 crawler-suumo crawler-suumo.arm64 \
+				scanner-homes scanner-homes.arm64 crawler-homes crawler-homes.arm64 \
+				scanner-rstore scanner-rstore.arm64 crawler-rstore crawler-rstore.arm64 \
+				mediator mediator.arm64 notifier notifier.arm64 cache-mgr cache-mgr.arm64 \
+				protogen pwbase pwbase.arm64
 

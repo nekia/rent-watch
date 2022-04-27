@@ -4,7 +4,7 @@ const express = require('express');
 const http = require('http');
 
 const nats_server_url = process.env.NATS_SERVER_URL ? process.env.NATS_SERVER_URL : "127.0.0.1:4222";
-const nats_subject_roomurl = process.env.NATS_SUBJECT_ROOMURL ? process.env.NATS_SUBJECT_ROOMURL : "room-homes-tky-rent";
+const nats_subject_roomurl = process.env.NATS_SUBJECT_ROOMURL ? process.env.NATS_SUBJECT_ROOMURL : "room-rstore-tky-rent";
 const nats_subject_roomdetail = process.env.NATS_SUBJECT_ROOMDETAIL ? process.env.NATS_SUBJECT_ROOMDETAIL : "roomdetails-tky-rent";
 
 getNewContext = async (browser) => {
@@ -42,39 +42,46 @@ scanRoomDetail = async (address) => {
 }
 
 getPriceFloat = async (page) => {
-  const roomPriceElm = await page.$('//th[text()[contains(., "賃料（管理費等）")]]/following-sibling::td/div/div[1]/span/span')
+  const roomPriceElm = await page.$('//h3[text()[contains(., "賃料")]]/following-sibling::p[1]')
   const priceStr = await roomPriceElm.innerText();
-  const priceWoUnit = priceStr.match(/[\d.]+/);
-  return parseFloat(priceWoUnit[0])
+  const priceNoUnit = priceStr.match(/[\d,]+/);
+  return parseInt(priceNoUnit[0].replace(/,/g, '')) / 10000
 }
 
 getSizeFloat = async (page) => {
-  const roomSizeElm = await page.$('//span[text()[contains(., "専有面積")]]/parent::*/following-sibling::dd[1]')
+  const roomSizeElm = await page.$('//h3[text()[contains(., "面積")]]/following-sibling::p[1]')
   const roomSizeStr = await roomSizeElm.innerText()
   const roomSizeNoUnit = roomSizeStr.match(/[\d.]+/);
   return parseFloat(roomSizeNoUnit[0])
 }
 
 getFloorLevel = async (page) => {
-  // 所在階 / 階数 | 2階 / 12階建 (地下1階)
-  const floorLevel = await page.$('//th[text()[contains(., "所在階 / 階数")]]/following-sibling::td[1]')
+  // e.g. 鉄筋コンクリート造 地上3階建て
+  // e.e. 鉄筋コンクリート造 地下1階 地上10階建て
+  const floorTopLevel = await page.$('//h3[text()[contains(., "構造")]]/following-sibling::p[1]')
+  const floorTopLevelStr = await floorTopLevel.innerText()
+  const floorTopLevelNoUnit = floorTopLevelStr.match(/[\d]+/g);
+
+  const floorLevel = await page.$('//h3[text()[contains(., "所在階")]]/following-sibling::p[1]')
   const floorLevelStr = await floorLevel.innerText()
   const floorLevelNoUnit = floorLevelStr.match(/[\d]+/g);
-  return { floorLevel: parseInt(floorLevelNoUnit[0]), floorTopLevel: parseInt(floorLevelNoUnit[1])}
+
+  return { floorLevel: parseInt(floorLevelNoUnit[0]), floorTopLevel: parseInt(floorTopLevelNoUnit.slice(-1))}
 }
 
 getLocation = async (page) => {
-  const address = await page.$('//span[text()[contains(., "所在地")]]/parent::*/following-sibling::dd[1]')
-  const addressStr = await address.innerText().then( result => result.trim().split('\n')[0] );
+  const address = await page.$('//h3[text()[contains(., "所在地")]]/following-sibling::p[1]/a')
+  const addressStr = await address.innerText().then( result => result.trim() );
   return addressStr
 }
 
 getBuiltYear = async (page) => {
-  const builtYrElm = await page.$('//dd[@id="chk-bkc-kenchikudate"]')
-  return builtYrElm.innerText().then( (result) => {
-    const builtYrStr = result.match(/(\d+)年/)
+  return page.$('//h3[text()="築年"]/following-sibling::p[1]')
+  .then( p => p.innerText() )
+  .then( str => {
+    const builtYrStr = str.match(/(\d+)年/)
     return parseInt(builtYrStr[1])
-  });
+  })
 }
 
 (async () => {
