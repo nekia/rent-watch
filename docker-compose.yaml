@@ -1,9 +1,9 @@
 version: "3"
 services:
   # crawler:
-  #   image: "nekia/crawler-linea:1.0.0"
+  #   image: "crawler-linea:1.0.0"
   scanner-linea:
-    image: "nekia/scanner-linea:1.0.0"
+    image: "scanner-linea:1.0.0"
     deploy:
       replicas: 1
     environment:
@@ -13,7 +13,7 @@ services:
     depends_on:
       - nats-server
   scanner-suumo:
-    image: "nekia/scanner-suumo:1.0.0"
+    image: "scanner-suumo:1.0.0"
     deploy:
       replicas: 1
     environment:
@@ -23,7 +23,7 @@ services:
     depends_on:
       - nats-server
   scanner-homes:
-    image: "nekia/scanner-homes:1.0.0"
+    image: "scanner-homes:1.0.0"
     deploy:
       replicas: 1
     environment:
@@ -33,7 +33,7 @@ services:
     depends_on:
       - nats-server
   scanner-homes-ngy:
-    image: "nekia/scanner-homes:1.0.0"
+    image: "scanner-homes:1.0.0"
     deploy:
       replicas: 1
     environment:
@@ -43,13 +43,13 @@ services:
     depends_on:
       - nats-server
   mediator:
-    image: "nekia/mediator:1.0.0"
+    image: "mediator:1.0.0"
     environment:
       - NATS_SERVER_URL=nats-server:4222
     depends_on:
       - nats-server
   notifier:
-    image: "nekia/notifier:1.0.0"
+    image: "notifier:1.0.0"
     environment:
       - NATS_SERVER_URL=nats-server:4222
       - NATS_CONSUMER_NAME=myconsumer
@@ -60,7 +60,7 @@ services:
       - nats-server
       - cache-mgr
   notifier-ngy:
-    image: "nekia/notifier:1.0.0"
+    image: "notifier:1.0.0"
     environment:
       - NATS_SERVER_URL=nats-server:4222
       - NATS_CONSUMER_NAME=myconsumer2
@@ -74,7 +74,7 @@ services:
     volumes:
       - ./notification/setting-ngy-rent:/usr/src/app/setting
   cache-mgr:
-    image: "nekia/cache-mgr:1.0.0"
+    image: "cache-mgr:1.0.0"
     ports:
       - 50051:50051
     environment:

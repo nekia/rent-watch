@@ -1,9 +1,9 @@
 version: "3"
 services:
   # crawler:
-  #   image: "nekia/crawler-linea:1.0.0"
+  #   image: "crawler-linea:1.0.0"
   crawler-linea-ngy:
-    image: "nekia/crawler-homes:1.0.0"
+    image: "crawler-homes:1.0.0"
     deploy:
       replicas: 1
     environment:

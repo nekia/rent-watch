@@ -75,98 +75,98 @@ protogen.cache-mgr:
 		./protobuf/cacheMgr.proto
 
 pwbase:
-	$(DOCKER_BUILDX) -f Dockerfile-pwbase --platform linux/amd64 -t ${REGISTRY_URL}/$(IMAGE_PATH)/$@:$(COMMIT_HASH) --push
+	$(DOCKER_BUILDX) -f Dockerfile-pwbase --platform linux/amd64 -t ${REGISTRY_URL}/$@:$(COMMIT_HASH) --push
 
 pwbase.arm64:
-	$(DOCKER_BUILDX) -f Dockerfile-pwbase --platform linux/arm64 -t ${REGISTRY_URL}/$(IMAGE_PATH)/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+	$(DOCKER_BUILDX) -f Dockerfile-pwbase --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
 scanner-linea:
 	cd scanner/linea && \
-	$(DOCKER_BUILD) -t $(IMAGE_PATH)/$@:$(COMMIT_HASH)
+	$(DOCKER_BUILD) -t $@:$(COMMIT_HASH)
 
 scanner-linea.arm64:
 	cd scanner/linea && \
-	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(IMAGE_PATH)/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
 scanner-suumo:
 	cd scanner/suumo && \
-	$(DOCKER_BUILD) -t $(IMAGE_PATH)/$@:$(COMMIT_HASH)
+	$(DOCKER_BUILD) -t $@:$(COMMIT_HASH)
 
 scanner-suumo.arm64:
 	cd scanner/suumo && \
-	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(IMAGE_PATH)/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
 scanner-homes:
 	cd scanner/homes && \
-	$(DOCKER_BUILD) -t $(IMAGE_PATH)/$@:$(COMMIT_HASH)
+	$(DOCKER_BUILD) -t $@:$(COMMIT_HASH)
 
 scanner-homes.arm64:
 	cd scanner/homes && \
-	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(IMAGE_PATH)/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
 scanner-rstore:
 	cd scanner/rstore && \
-	$(DOCKER_BUILD) -t $(IMAGE_PATH)/$@:$(COMMIT_HASH)
+	$(DOCKER_BUILD) -t $@:$(COMMIT_HASH)
 
 scanner-rstore.arm64:
 	cd scanner/rstore && \
-	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(IMAGE_PATH)/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
 crawler-linea: protogen.crawler-linea
 	cd crawler/linea && \
-	$(DOCKER_BUILD) -t $(IMAGE_PATH)/$@:$(COMMIT_HASH)
+	$(DOCKER_BUILD) -t $@:$(COMMIT_HASH)
 
 crawler-linea.arm64: protogen.crawler-linea
 	cd crawler/linea && \
-	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(IMAGE_PATH)/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
 crawler-suumo: protogen.crawler-suumo
 	cd crawler/suumo && \
-	$(DOCKER_BUILD) -t $(IMAGE_PATH)/$@:$(COMMIT_HASH)
+	$(DOCKER_BUILD) -t $@:$(COMMIT_HASH)
 
 crawler-suumo.arm64: protogen.crawler-suumo
 	cd crawler/suumo && \
-	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(IMAGE_PATH)/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
 crawler-homes: protogen.crawler-homes
 	cd crawler/homes && \
-	$(DOCKER_BUILD) -t $(IMAGE_PATH)/$@:$(COMMIT_HASH)
+	$(DOCKER_BUILD) -t $@:$(COMMIT_HASH)
 
 crawler-homes.arm64: protogen.crawler-homes
 	cd crawler/homes && \
-	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(IMAGE_PATH)/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
 crawler-rstore: protogen.crawler-rstore
 	cd crawler/rstore && \
-	$(DOCKER_BUILD) -t $(IMAGE_PATH)/$@:$(COMMIT_HASH)
+	$(DOCKER_BUILD) -t $@:$(COMMIT_HASH)
 
 crawler-rstore.arm64: protogen.crawler-rstore
 	cd crawler/rstore && \
-	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(IMAGE_PATH)/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
 mediator:
 	cd mediator && \
-	$(DOCKER_BUILD) -t $(IMAGE_PATH)/$@:$(COMMIT_HASH)
+	$(DOCKER_BUILD) -t $@:$(COMMIT_HASH)
 
 mediator.arm64:
 	cd mediator && \
-	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(IMAGE_PATH)/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
 notifier: protogen.notifier
 	cd notification && \
-	$(DOCKER_BUILD) -t $(IMAGE_PATH)/$@:$(COMMIT_HASH)
+	$(DOCKER_BUILD) -t $@:$(COMMIT_HASH)
 
 notifier.arm64: protogen.notifier
 	cd notification && \
-	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(IMAGE_PATH)/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
 cache-mgr: protogen.cache-mgr
 	cd cacheMgr && \
-	$(DOCKER_BUILD) -t $(IMAGE_PATH)/$@:$(COMMIT_HASH)
+	$(DOCKER_BUILD) -t $@:$(COMMIT_HASH)
 
 cache-mgr.arm64: protogen.cache-mgr
 	cd cacheMgr && \
-	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(IMAGE_PATH)/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
 .PHONY: scanner-linea scanner-linea.arm64 crawler-linea crawler-linea.arm64 \
 				scanner-suumo scanner-suumo.arm64 crawler-suumo crawler-suumo.arm64 \
