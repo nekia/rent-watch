@@ -1,0 +1,127 @@
+const grpc = require('@grpc/grpc-js');
+const playwright = require('playwright-chromium');
+const nats = require('nats');
+
+const setting = require('./setting/setting.json');
+const messages = require('./generated/cacheMgr_pb');
+const services = require('./generated/cacheMgr_grpc_pb');
+
+const nats_server_url = process.env.NATS_SERVER_URL ? process.env.NATS_SERVER_URL : "127.0.0.1:4222";
+const cache_mgr_url = process.env.CACHE_MGR_URL ? process.env.CACHE_MGR_URL : "127.0.0.1:50051";
+
+const clientCacheMgr = new services.CacheMgrClient(cache_mgr_url, grpc.credentials.createInsecure());
+
+const checkUrl = setting.url;
+
+openNConn = () => {
+  // to create a connection to a nats-server:
+  return nats.connect({ servers: nats_server_url });
+}
+
+publishRoom = (nc, url) => {
+  const jc = nats.JSONCodec();
+  nc.publish("rooms", jc.encode({ url: url, mode: setting.mode }));
+}
+
+closeNConn = async (nc) => {
+  await nc.drain()
+}
+
+getNewContext = async (browser) => {
+  const ctx = await browser.newContext({
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4595.0 Safari/537.36',
+    ignoreHTTPSErrors: true
+  });
+  await ctx.setDefaultTimeout(60000)
+  return ctx;
+}
+
+getNewPage = async (context) => {
+  return context.newPage()
+}
+
+checkCacheByUrl = async (url) => {
+  return new Promise((resolv, reject) => {
+    const request = new messages.CheckCacheByUrlRequest();
+    request.setUrl(url);
+    clientCacheMgr.checkCacheByUrl( request, function(err, response) {
+      console.log('Completed checkCacheByUrl', response.getResult())
+      resolv(response.getResult() != messages.CacheStatus.NOT_CACHED)
+    });
+  });
+}
+
+scanRoom = async (page) => {
+  const nc = await openNConn();
+  try {
+    const roomPathArray = await page.$$('//article[@class="searchEstateList"]/a').then((paths) => {
+      const promises = [];
+      for (path of paths) {
+        promises.push(path.getAttribute("href"));
+      }
+      return Promise.all(promises)
+    })
+
+    const roomLinks = roomPathArray.map(path => `https://www.goodrooms.jp${path}`)
+
+    for (url of roomLinks) {
+      if (await checkCacheByUrl(url)) {
+        continue
+      }
+      publishRoom(nc, url)
+    }
+
+  } catch (error) {
+    console.warn('## Failed to retrieve the room info ##', error)
+  } finally {
+    await closeNConn(nc);
+  }
+  return
+}
+
+pagenation = async (page) => {
+  try {
+    const nextPageBtn = await page.$('//ul[@class="pagination"]/li[@class="next"]/a');
+    if (!nextPageBtn) {
+      console.log('End of pages')
+      return { nextPageExist: false, nextPage: page };
+    } else {
+      console.log('Next page')
+      await nextPageBtn.click()
+      await page.waitForTimeout(5000)
+      return { nextPageExist: true, nextPage: page };
+    }
+  } catch (error) {
+    console.error('Failed to pagenate', error)
+    return { nextPageExist: false, nextPage: undefined }
+  }
+}
+
+(async () => {
+
+  const browser = await playwright['chromium'].launch({ headless: true });
+  const context = await getNewContext(browser);
+  let page = await getNewPage(context);
+
+  console.log(`##### Start - Goodrooms`);
+  await page.goto(checkUrl);
+  await page.waitForTimeout(1000)
+
+  while (1) {
+    await scanRoom(page)
+
+    // Pagenation
+    const { nextPageExist,  nextPage } = await pagenation(page)
+    if (!nextPageExist) {
+      break;
+    } else {
+      page = nextPage;
+    }
+    await page.waitForTimeout(5000)
+  }
+
+  console.log(`##### Done - Goodrooms`);
+
+  await page.close()
+  await browser.close();
+})();

@@ -14,16 +14,19 @@ GRPC_TOOL=$(NPM_BIN)/grpc_tools_node_protoc
 
 protogen: protogen.crawler-linea protogen.crawler-suumo \
 					protogen.crawler-homes protogen.crawler-rstore \
+					protogen.crawler-goodrooms \
 					protogen.notifier protogen.cache-mgr
 build_all:  scanner-linea crawler-linea \
 						scanner-suumo crawler-suumo \
 						scanner-homes crawler-homes \
 						scanner-rstore crawler-rstore \
+						scanner-goodrooms crawler-goodrooms \
 						mediator notifier cache-mgr
 push_all: scanner-linea.arm64 crawler-linea.arm64 \
 					scanner-suumo.arm64 crawler-suumo.arm64 \
 					scanner-homes.arm64 crawler-homes.arm64 \
 					scanner-rstore.arm64 crawler-rstore.arm64 \
+					scanner-goodrooms.arm64 crawler-goodrooms.arm64 \
 					mediator.arm64 notifier.arm64 cache-mgr.arm64
 
 protogen.crawler-linea:
@@ -55,6 +58,14 @@ protogen.crawler-rstore:
 	mkdir -p crawler/rstore/generated
 	$(GRPC_TOOL) --js_out=import_style=commonjs,binary:crawler/rstore/generated \
 		--grpc_out=grpc_js:crawler/rstore/generated \
+		--proto_path=protobuf \
+		./protobuf/cacheMgr.proto
+
+protogen.crawler-goodrooms:
+	rm -rf crawler/goodrooms/generated
+	mkdir -p crawler/goodrooms/generated
+	$(GRPC_TOOL) --js_out=import_style=commonjs,binary:crawler/goodrooms/generated \
+		--grpc_out=grpc_js:crawler/goodrooms/generated \
 		--proto_path=protobuf \
 		./protobuf/cacheMgr.proto
 
@@ -112,6 +123,14 @@ scanner-rstore.arm64:
 	cd scanner/rstore && \
 	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
+scanner-goodrooms:
+	cd scanner/goodrooms && \
+	$(DOCKER_BUILD) -t $@:$(COMMIT_HASH)
+
+scanner-goodrooms.arm64:
+	cd scanner/goodrooms && \
+	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+
 crawler-linea: protogen.crawler-linea
 	cd crawler/linea && \
 	$(DOCKER_BUILD) -t $@:$(COMMIT_HASH)
@@ -126,6 +145,14 @@ crawler-suumo: protogen.crawler-suumo
 
 crawler-suumo.arm64: protogen.crawler-suumo
 	cd crawler/suumo && \
+	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+
+crawler-goodrooms: protogen.crawler-goodrooms
+	cd crawler/goodrooms && \
+	$(DOCKER_BUILD) -t $@:$(COMMIT_HASH)
+
+crawler-goodrooms.arm64: protogen.crawler-goodrooms
+	cd crawler/goodrooms && \
 	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
 crawler-homes: protogen.crawler-homes
@@ -172,6 +199,7 @@ cache-mgr.arm64: protogen.cache-mgr
 				scanner-suumo scanner-suumo.arm64 crawler-suumo crawler-suumo.arm64 \
 				scanner-homes scanner-homes.arm64 crawler-homes crawler-homes.arm64 \
 				scanner-rstore scanner-rstore.arm64 crawler-rstore crawler-rstore.arm64 \
+				scanner-goodrooms scanner-goodrooms.arm64 crawler-goodrooms crawler-goodrooms.arm64 \
 				mediator mediator.arm64 notifier notifier.arm64 cache-mgr cache-mgr.arm64 \
 				protogen pwbase pwbase.arm64
 

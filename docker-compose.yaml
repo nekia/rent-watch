@@ -42,6 +42,16 @@ services:
       - NATS_SUBJECT_ROOMDETAIL=roomdetails-ngy-rent
     depends_on:
       - nats-server
+  scanner-goodrooms:
+    image: "scanner-goodrooms:1.0.0"
+    deploy:
+      replicas: 1
+    environment:
+      - NATS_SERVER_URL=nats-server:4222
+      - NATS_SUBJECT_ROOMURL=room-goodrooms-tky-rent
+      - NATS_SUBJECT_ROOMDETAIL=roomdetails-tky-rent
+    depends_on:
+      - nats-server
   mediator:
     image: "mediator:1.0.0"
     environment:
