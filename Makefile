@@ -4,7 +4,7 @@ DOCKER_BUILDX=docker buildx build --builder myapp .
 DOCKER_PUSH=docker push
 DOCKER_TAG=docker tag
 IMAGE_PATH=nekia
-REGISTRY_URL=192.168.2.133:32608
+REGISTRY_URL=192.168.0.133:30007
 
 # docker buildx create --use --name myapp --driver docker-container --config ./buildkitd.toml
 
@@ -35,7 +35,7 @@ protogen.crawler-linea:
 	$(GRPC_TOOL) --js_out=import_style=commonjs,binary:crawler/linea/generated \
 		--grpc_out=grpc_js:crawler/linea/generated \
 		--proto_path=protobuf \
-		./protobuf/cacheMgr.proto
+		./protobuf/cacheMgr.proto ./protobuf/roomdetail.proto
 
 protogen.crawler-suumo:
 	rm -rf crawler/suumo/generated
@@ -43,7 +43,7 @@ protogen.crawler-suumo:
 	$(GRPC_TOOL) --js_out=import_style=commonjs,binary:crawler/suumo/generated \
 		--grpc_out=grpc_js:crawler/suumo/generated \
 		--proto_path=protobuf \
-		./protobuf/cacheMgr.proto
+		./protobuf/cacheMgr.proto ./protobuf/roomdetail.proto
 
 protogen.crawler-homes:
 	rm -rf crawler/homes/generated
@@ -51,7 +51,7 @@ protogen.crawler-homes:
 	$(GRPC_TOOL) --js_out=import_style=commonjs,binary:crawler/homes/generated \
 		--grpc_out=grpc_js:crawler/homes/generated \
 		--proto_path=protobuf \
-		./protobuf/cacheMgr.proto
+		./protobuf/cacheMgr.proto ./protobuf/roomdetail.proto
 
 protogen.crawler-rstore:
 	rm -rf crawler/rstore/generated
@@ -59,7 +59,7 @@ protogen.crawler-rstore:
 	$(GRPC_TOOL) --js_out=import_style=commonjs,binary:crawler/rstore/generated \
 		--grpc_out=grpc_js:crawler/rstore/generated \
 		--proto_path=protobuf \
-		./protobuf/cacheMgr.proto
+		./protobuf/cacheMgr.proto ./protobuf/roomdetail.proto
 
 protogen.crawler-goodrooms:
 	rm -rf crawler/goodrooms/generated
@@ -67,7 +67,7 @@ protogen.crawler-goodrooms:
 	$(GRPC_TOOL) --js_out=import_style=commonjs,binary:crawler/goodrooms/generated \
 		--grpc_out=grpc_js:crawler/goodrooms/generated \
 		--proto_path=protobuf \
-		./protobuf/cacheMgr.proto
+		./protobuf/cacheMgr.proto ./protobuf/roomdetail.proto
 
 protogen.notifier:
 	rm -rf notification/generated
@@ -75,7 +75,7 @@ protogen.notifier:
 	$(GRPC_TOOL) --js_out=import_style=commonjs,binary:notification/generated \
 		--grpc_out=grpc_js:notification/generated \
 		--proto_path=protobuf \
-		./protobuf/cacheMgr.proto
+		./protobuf/cacheMgr.proto ./protobuf/roomdetail.proto
 
 protogen.cache-mgr:
 	rm -rf cacheMgr/generated
@@ -83,13 +83,16 @@ protogen.cache-mgr:
 	$(GRPC_TOOL) --js_out=import_style=commonjs,binary:cacheMgr/generated \
 		--grpc_out=grpc_js:cacheMgr/generated \
 		--proto_path=protobuf \
-		./protobuf/cacheMgr.proto
+		./protobuf/cacheMgr.proto ./protobuf/roomdetail.proto
 
 pwbase:
 	$(DOCKER_BUILDX) -f Dockerfile-pwbase --platform linux/amd64 -t ${REGISTRY_URL}/$@:$(COMMIT_HASH) --push
 
 pwbase.arm64:
 	$(DOCKER_BUILDX) -f Dockerfile-pwbase --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+
+ngrok.arm64:
+	$(DOCKER_BUILDX) -f Dockerfile-ngrok --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
 scanner-linea:
 	cd scanner/linea && \

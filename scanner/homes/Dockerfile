@@ -1,4 +1,4 @@
-FROM 192.168.2.133:32608/pwbase:1.0.0
+FROM 192.168.0.133:30007/pwbase:1.0.0
 
 COPY . /usr/src/app/
 WORKDIR /usr/src/app/

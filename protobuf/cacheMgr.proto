@@ -4,6 +4,8 @@ syntax = "proto3";
 // パッケージを指定
 package cacheMgr;
 
+import public "roomdetail.proto";
+
 // サービスを定義
 service CacheMgr {
   // 引数の型：HelloRequestメッセージ
@@ -52,18 +54,4 @@ enum CacheMode {
 enum CacheResult {
   SUCCESS = 0;
   FAIL = 1;
-}
-
-message RoomDetail {
-  string address = 1;
-  double price = 2;
-  double size = 3;
-  FloorLevel floorLevel = 4;
-  string location = 5;
-  int32 builtYear = 6;
-}
-
-message FloorLevel {
-  int32 floorLevel = 1;
-  int32 floorTopLevel = 2;
 }

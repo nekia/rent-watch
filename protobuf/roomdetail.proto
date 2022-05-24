@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+message FloorLevel {
+  int32 floorLevel = 1;
+  int32 floorTopLevel = 2;
+}
+
+enum RoomType {
+  RENT = 0;
+  SALE = 1;
+}
+
+enum EstateArea {
+  TKY = 0;
+  NGY = 1;
+}
+
+message RoomDetail {
+  string address = 1;
+  double price = 2;
+  double size = 3;
+  FloorLevel floorLevel = 4;
+  string location = 5;
+  int32 builtYear = 6;
+  RoomType type = 7;
+  EstateArea area = 8;
+}

@@ -6,6 +6,7 @@ const nats = require('nats');
 const setting = require('./setting/setting.json');
 const messages = require('./generated/cacheMgr_pb');
 const services = require('./generated/cacheMgr_grpc_pb');
+const messages_roomdetail = require('./generated/roomdetail_pb');
 
 const nats_server_url = process.env.NATS_SERVER_URL ? process.env.NATS_SERVER_URL : "127.0.0.1:4222";
 const nats_consumer_name = process.env.NATS_CONSUMER_NAME ? process.env.NATS_CONSUMER_NAME : "myconsumer";
@@ -90,11 +91,11 @@ meetCondition = (detailObj) => {
 }
 
 copyDetailObjToRequest = (detailObj, request) => {
-  const floorLevel = new messages.FloorLevel();
+  const floorLevel = new messages_roomdetail.FloorLevel();
   floorLevel.setFloorlevel(detailObj.floorLevel.floorLevel)
   floorLevel.setFloortoplevel(detailObj.floorLevel.floorTopLevel)
 
-  const detail = new messages.RoomDetail();
+  const detail = new messages_roomdetail.RoomDetail();
   detail.setAddress(detailObj.address)
   detail.setPrice(detailObj.price)
   detail.setSize(detailObj.size)
