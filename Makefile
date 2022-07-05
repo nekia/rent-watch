@@ -15,19 +15,21 @@ GRPC_TOOL=$(NPM_BIN)/grpc_tools_node_protoc
 protogen: protogen.crawler-linea protogen.crawler-suumo \
 					protogen.crawler-homes protogen.crawler-rstore \
 					protogen.crawler-goodrooms \
-					protogen.notifier protogen.cache-mgr
+					protogen.notifier protogen.cache-mgr \
+					protogen.area-info-mgr
 build_all:  scanner-linea crawler-linea \
 						scanner-suumo crawler-suumo \
 						scanner-homes crawler-homes \
 						scanner-rstore crawler-rstore \
 						scanner-goodrooms crawler-goodrooms \
-						mediator notifier cache-mgr
+						mediator notifier cache-mgr area-info-mgr
 push_all: scanner-linea.arm64 crawler-linea.arm64 \
 					scanner-suumo.arm64 crawler-suumo.arm64 \
 					scanner-homes.arm64 crawler-homes.arm64 \
 					scanner-rstore.arm64 crawler-rstore.arm64 \
 					scanner-goodrooms.arm64 crawler-goodrooms.arm64 \
-					mediator.arm64 notifier.arm64 cache-mgr.arm64
+					mediator.arm64 notifier.arm64 cache-mgr.arm64 \
+					area-info-mgr.arm64	
 
 protogen.crawler-linea:
 	rm -rf crawler/linea/generated
@@ -75,7 +77,8 @@ protogen.notifier:
 	$(GRPC_TOOL) --js_out=import_style=commonjs,binary:notification/generated \
 		--grpc_out=grpc_js:notification/generated \
 		--proto_path=protobuf \
-		./protobuf/cacheMgr.proto ./protobuf/roomdetail.proto
+		./protobuf/cacheMgr.proto ./protobuf/roomdetail.proto \
+		./protobuf/areaInfoMgr.proto
 
 protogen.cache-mgr:
 	rm -rf cacheMgr/generated
@@ -84,6 +87,14 @@ protogen.cache-mgr:
 		--grpc_out=grpc_js:cacheMgr/generated \
 		--proto_path=protobuf \
 		./protobuf/cacheMgr.proto ./protobuf/roomdetail.proto
+
+protogen.area-info-mgr:
+	rm -rf areaInfoMgr/generated
+	mkdir -p areaInfoMgr/generated
+	$(GRPC_TOOL) --js_out=import_style=commonjs,binary:areaInfoMgr/generated \
+		--grpc_out=grpc_js:areaInfoMgr/generated \
+		--proto_path=protobuf \
+		./protobuf/areaInfoMgr.proto
 
 pwbase:
 	$(DOCKER_BUILDX) -f Dockerfile-pwbase --platform linux/amd64 -t ${REGISTRY_URL}/$@:$(COMMIT_HASH) --push
@@ -198,11 +209,20 @@ cache-mgr.arm64: protogen.cache-mgr
 	cd cacheMgr && \
 	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
+area-info-mgr: protogen.area-info-mgr
+	cd areaInfoMgr && \
+	$(DOCKER_BUILD) -t $@:$(COMMIT_HASH)
+
+area-info-mgr.arm64:
+	cd areaInfoMgr && \
+	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+
 .PHONY: scanner-linea scanner-linea.arm64 crawler-linea crawler-linea.arm64 \
 				scanner-suumo scanner-suumo.arm64 crawler-suumo crawler-suumo.arm64 \
 				scanner-homes scanner-homes.arm64 crawler-homes crawler-homes.arm64 \
 				scanner-rstore scanner-rstore.arm64 crawler-rstore crawler-rstore.arm64 \
 				scanner-goodrooms scanner-goodrooms.arm64 crawler-goodrooms crawler-goodrooms.arm64 \
 				mediator mediator.arm64 notifier notifier.arm64 cache-mgr cache-mgr.arm64 \
+				area-info-mgr area-info-mgr.arm64 \
 				protogen pwbase pwbase.arm64
 

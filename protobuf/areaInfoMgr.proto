@@ -1,0 +1,21 @@
+// Protocol Buffersのバージョンを指定
+syntax = "proto3";
+
+// パッケージを指定
+package areaInfoMgr;
+
+
+// サービスを定義
+service areaInfoMgr {
+  rpc GetRank (GetRankRequest) returns (GetRankResponse);
+}
+
+message GetRankRequest {
+  string address = 1;
+}
+
+message GetRankResponse {
+  int32 rank = 1;
+  double latitude = 2;
+  double longitude = 3;
+}

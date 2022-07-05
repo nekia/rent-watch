@@ -7,16 +7,20 @@ const setting = require('./setting/setting.json');
 const messages = require('./generated/cacheMgr_pb');
 const services = require('./generated/cacheMgr_grpc_pb');
 const messages_roomdetail = require('./generated/roomdetail_pb');
+const messagesAreaInfoMgr = require('./generated/areaInfoMgr_pb');
+const servicesAreaInfoMgr = require('./generated/areaInfoMgr_grpc_pb');
 
 const nats_server_url = process.env.NATS_SERVER_URL ? process.env.NATS_SERVER_URL : "127.0.0.1:4222";
 const nats_consumer_name = process.env.NATS_CONSUMER_NAME ? process.env.NATS_CONSUMER_NAME : "myconsumer";
 const nats_consumer_batch_size = process.env.NATS_CONSUMER_BATCH_SIZE ? parseInt(process.env.NATS_CONSUMER_BATCH_SIZE) : 10;
 const nats_consumer_batch_duration = process.env.NATS_CONSUMER_BATCH_DURATION ? parseInt(process.env.NATS_CONSUMER_BATCH_DURATION) : 180000;
 const cache_mgr_url = process.env.CACHE_MGR_URL ? process.env.CACHE_MGR_URL : "127.0.0.1:50051";
-const ENABLE_NOTIFY = process.env.ENABLE_NOTIFY === "1" ? true : 
+const area_info_mgr_url = process.env.AREA_INFO_MGR_URL ? process.env.AREA_INFO_MGR_URL : "127.0.0.1:50051";
+const ENABLE_NOTIFY = process.env.ENABLE_NOTIFY === "1" ? true :
   (process.env.ENABLE_NOTIFY === "0" ? false : setting.enable_notify /* default */ );
 
 const clientCacheMgr = new services.CacheMgrClient(cache_mgr_url, grpc.credentials.createInsecure());
+const clientAreaInfoMgr = new servicesAreaInfoMgr.AreaInfoMgrClient(area_info_mgr_url, grpc.credentials.createInsecure());
 
 const BASE_URL = 'https://notify-api.line.me';
 const PATH = '/api/notify';
@@ -110,7 +114,7 @@ copyDetailObjToRequest = (detailObj, request) => {
 CheckCacheByDetail = (detailObj) => {
   let request = new messages.CheckCacheByDetailRequest();
   request = copyDetailObjToRequest(detailObj, request)
-  
+
   return new Promise((resolv, reject) => {
     clientCacheMgr.checkCacheByDetail( request, function(err, response) {
       console.log('Completed checkCacheByDetail', response.getResult())
@@ -123,13 +127,24 @@ notifyLine = async (roomObj) => {
   if (ENABLE_NOTIFY) {
     console.log(`New room !!`, roomObj.address)
     config.data = querystring.stringify({
-      message: `${roomObj.price}万円  ${roomObj.size}平米  ${roomObj.floorLevel.floorLevel}/${roomObj.floorLevel.floorTopLevel}\n${roomObj.location}\n${roomObj.address}`,
+      message: `ランク${roomObj.rank}  ${roomObj.price}万円  ${roomObj.size}平米  ${roomObj.floorLevel.floorLevel}/${roomObj.floorLevel.floorTopLevel}\n${roomObj.location}\n${roomObj.address}`,
     })
     console.log(config)
     const response = await axios.request(config);
   } else {
     console.log(`New room !! But disable notification to LINE`, roomObj.address)
   }
+}
+
+getRank = async (address) => {
+  return await new Promise((resolv, reject) => {
+    const request = new messagesAreaInfoMgr.GetRankRequest();
+    request.setAddress(address);
+    clientAreaInfoMgr.getRank(request, (err, response) => {
+      console.log(response.getRank());
+      resolv(response.getRank());
+    })
+  });
 }
 
 notify = async (detailObjs) => {
@@ -166,18 +181,28 @@ notify = async (detailObjs) => {
         }
 
         console.log(`[${msgs.getProcessed()}]:`, detailObj.address)
-        if (await meetCondition(detailObj)) {
-
-          if (await CheckCacheByDetail(detailObj)) {
-            console.log('Already notified')
-          } else {
-            roomsToBeNotified.push(detailObj)
-          }
-
-          await addCacheNotified(detailObj)
-        } else {
+        if (!await meetCondition(detailObj)) {
           await addCacheInspected(detailObj)
+          m.ack();
+          continue;
         }
+
+        const rank = await getRank(detailObj.address);
+        if (rank > setting.min_rank) {
+          console.log('Too high risk in case on disaster! ', rank);
+          await addCacheInspected(detailObj)
+          m.ack();
+          continue;
+        }
+
+        detailObj['rank'] = rank;
+
+        if (await CheckCacheByDetail(detailObj)) {
+          console.log('Already notified')
+        } else {
+          roomsToBeNotified.push(detailObj)
+        }
+        await addCacheNotified(detailObj)
         m.ack();
       }
       console.log('Completed fetch', roomsToBeNotified)
