@@ -22,14 +22,14 @@ build_all:  scanner-linea crawler-linea \
 						scanner-homes crawler-homes \
 						scanner-rstore crawler-rstore \
 						scanner-goodrooms crawler-goodrooms \
-						mediator notifier cache-mgr area-info-mgr
+						mediator notifier cache-mgr area-info-mgr imi-server
 push_all: scanner-linea.arm64 crawler-linea.arm64 \
 					scanner-suumo.arm64 crawler-suumo.arm64 \
 					scanner-homes.arm64 crawler-homes.arm64 \
 					scanner-rstore.arm64 crawler-rstore.arm64 \
 					scanner-goodrooms.arm64 crawler-goodrooms.arm64 \
 					mediator.arm64 notifier.arm64 cache-mgr.arm64 \
-					area-info-mgr.arm64	
+					area-info-mgr.arm64	imi-server.arm64
 
 protogen.crawler-linea:
 	rm -rf crawler/linea/generated
@@ -213,9 +213,17 @@ area-info-mgr: protogen.area-info-mgr
 	cd areaInfoMgr && \
 	$(DOCKER_BUILD) -t $@:$(COMMIT_HASH)
 
-area-info-mgr.arm64:
+area-info-mgr.arm64: protogen.area-info-mgr
 	cd areaInfoMgr && \
 	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+
+imi-server: 
+	cd areaInfoMgr && \
+	$(DOCKER_BUILD) -f Dockerfile-imi -t $@:$(COMMIT_HASH)
+
+imi-server.arm64:
+	cd areaInfoMgr && \
+	$(DOCKER_BUILDX) --platform linux/arm64 -f Dockerfile-imi -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
 .PHONY: scanner-linea scanner-linea.arm64 crawler-linea crawler-linea.arm64 \
 				scanner-suumo scanner-suumo.arm64 crawler-suumo crawler-suumo.arm64 \
@@ -223,6 +231,6 @@ area-info-mgr.arm64:
 				scanner-rstore scanner-rstore.arm64 crawler-rstore crawler-rstore.arm64 \
 				scanner-goodrooms scanner-goodrooms.arm64 crawler-goodrooms crawler-goodrooms.arm64 \
 				mediator mediator.arm64 notifier notifier.arm64 cache-mgr cache-mgr.arm64 \
-				area-info-mgr area-info-mgr.arm64 \
+				area-info-mgr area-info-mgr.arm64 imi-server imi-server.arm64 \
 				protogen pwbase pwbase.arm64
 

@@ -2,15 +2,18 @@
   "name": "areainfomgr",
   "version": "1.0.0",
   "description": "",
-  "main": "import_csv.js",
+  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "csv": "^6.1.5",
+    "@grpc/grpc-js": "^1.6.7",
+    "axios": "^0.27.2",
+    "google-protobuf": "^3.20.1",
     "ioredis": "^5.1.0"
   }
 }

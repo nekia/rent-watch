@@ -20,7 +20,7 @@ const ENABLE_NOTIFY = process.env.ENABLE_NOTIFY === "1" ? true :
   (process.env.ENABLE_NOTIFY === "0" ? false : setting.enable_notify /* default */ );
 
 const clientCacheMgr = new services.CacheMgrClient(cache_mgr_url, grpc.credentials.createInsecure());
-const clientAreaInfoMgr = new servicesAreaInfoMgr.AreaInfoMgrClient(area_info_mgr_url, grpc.credentials.createInsecure());
+const clientAreaInfoMgr = new servicesAreaInfoMgr.areaInfoMgrClient(area_info_mgr_url, grpc.credentials.createInsecure());
 
 const BASE_URL = 'https://notify-api.line.me';
 const PATH = '/api/notify';
@@ -64,6 +64,11 @@ meetCondition = (detailObj) => {
   console.log('Check if meet the conditions', detailObj.address)
   if (detailObj.price > setting.max_room_price) {
     console.log('Too expensive!', detailObj.price)
+    return false;
+  }
+
+  if (detailObj.price < setting.min_room_price) {
+    console.log('Too cheep!', detailObj.price)
     return false;
   }
 
@@ -127,7 +132,7 @@ notifyLine = async (roomObj) => {
   if (ENABLE_NOTIFY) {
     console.log(`New room !!`, roomObj.address)
     config.data = querystring.stringify({
-      message: `ランク${roomObj.rank}  ${roomObj.price}万円  ${roomObj.size}平米  ${roomObj.floorLevel.floorLevel}/${roomObj.floorLevel.floorTopLevel}\n${roomObj.location}\n${roomObj.address}`,
+      message: `ランク${roomObj.rank} ${roomObj.price}万円 ${roomObj.size}平米 ${roomObj.floorLevel.floorLevel}/${roomObj.floorLevel.floorTopLevel}\n${roomObj.location}\n${roomObj.address}\nhttps://www.google.com/maps/search/?api=1&query=${roomObj.latitude}%2C${roomObj.longitude}`,
     })
     console.log(config)
     const response = await axios.request(config);
@@ -136,13 +141,13 @@ notifyLine = async (roomObj) => {
   }
 }
 
-getRank = async (address) => {
+getRankInfo = async (address) => {
   return await new Promise((resolv, reject) => {
     const request = new messagesAreaInfoMgr.GetRankRequest();
     request.setAddress(address);
     clientAreaInfoMgr.getRank(request, (err, response) => {
-      console.log(response.getRank());
-      resolv(response.getRank());
+      console.log(response.toObject());
+      resolv(response.toObject());
     })
   });
 }
@@ -181,21 +186,24 @@ notify = async (detailObjs) => {
         }
 
         console.log(`[${msgs.getProcessed()}]:`, detailObj.address)
+
+        const rankInfo = await getRankInfo(detailObj.location);
+        if (rankInfo.rank > setting.min_rank) {
+          console.log('Too high risk in case on disaster! ', rankInfo.rank);
+          await addCacheInspected(detailObj)
+          m.ack();
+          continue;
+        }
+
         if (!await meetCondition(detailObj)) {
           await addCacheInspected(detailObj)
           m.ack();
           continue;
         }
 
-        const rank = await getRank(detailObj.address);
-        if (rank > setting.min_rank) {
-          console.log('Too high risk in case on disaster! ', rank);
-          await addCacheInspected(detailObj)
-          m.ack();
-          continue;
-        }
-
-        detailObj['rank'] = rank;
+        detailObj['rank'] = rankInfo.rank;
+        detailObj['latitude'] = rankInfo.latitude;
+        detailObj['longitude'] = rankInfo.longitude;
 
         if (await CheckCacheByDetail(detailObj)) {
           console.log('Already notified')
