@@ -131,8 +131,17 @@ CheckCacheByDetail = (detailObj) => {
 notifyLine = async (roomObj) => {
   if (ENABLE_NOTIFY) {
     console.log(`New room !!`, roomObj.address)
+    let message = ""
+
+    message += `${roomObj.price}万円 ${roomObj.size}平米 ${roomObj.floorLevel.floorLevel}/${roomObj.floorLevel.floorTopLevel}\n`
+    message += `${roomObj.location}\n${roomObj.address}`
+    if (roomObj.rank != 0){
+      message = `ランク${roomObj.rank} ` + message
+      message += `\nhttps://www.google.com/maps/search/?api=1&query=${roomObj.latitude}%2C${roomObj.longitude}`
+    }
+
     config.data = querystring.stringify({
-      message: `ランク${roomObj.rank} ${roomObj.price}万円 ${roomObj.size}平米 ${roomObj.floorLevel.floorLevel}/${roomObj.floorLevel.floorTopLevel}\n${roomObj.location}\n${roomObj.address}\nhttps://www.google.com/maps/search/?api=1&query=${roomObj.latitude}%2C${roomObj.longitude}`,
+      message
     })
     console.log(config)
     const response = await axios.request(config);
