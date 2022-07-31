@@ -197,7 +197,8 @@ notify = async (detailObjs) => {
         console.log(`[${msgs.getProcessed()}]:`, detailObj.address)
 
         const rankInfo = await getRankInfo(detailObj.location);
-        if (rankInfo.rank > setting.min_rank) {
+        console.log(`Type of rank : ${typeof(rankInfo.rank)} min_rank : ${setting.min_rank}`);
+        if (parseInt(rankInfo.rank) > setting.min_rank) {
           console.log('Too high risk in case on disaster! ', rankInfo.rank);
           await addCacheInspected(detailObj)
           m.ack();
