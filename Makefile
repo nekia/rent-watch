@@ -15,7 +15,7 @@ GRPC_TOOL=$(NPM_BIN)/grpc_tools_node_protoc
 protogen: protogen.crawler-linea protogen.crawler-suumo \
 					protogen.crawler-homes protogen.crawler-rstore \
 					protogen.crawler-goodrooms protogen.crawler-mitsui \
-					protogen.crawler-rnet \
+					protogen.crawler-rnet protogen.crawler-ken \
 					protogen.notifier protogen.cache-mgr \
 					protogen.area-info-mgr
 build_all:  scanner-linea crawler-linea \
@@ -31,6 +31,7 @@ push_all: scanner-linea.arm64 crawler-linea.arm64 \
 					scanner-goodrooms.arm64 crawler-goodrooms.arm64 \
 					scanner-mitsui.arm64 crawler-mitsui.arm64 \
 					scanner-rnet.arm64 crawler-rnet.arm64 \
+					scanner-ken.arm64 crawler-ken.arm64 \
 					mediator.arm64 notifier.arm64 cache-mgr.arm64 \
 					area-info-mgr.arm64	imi-server.arm64
 
