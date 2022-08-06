@@ -168,6 +168,35 @@ notify = async (detailObjs) => {
   }
 }
 
+checkDetailObj = async (detailObj) => {
+  console.log(`checkDetailObj : ${detailObj.address}`)
+
+  const rankInfo = await getRankInfo(detailObj.location);
+  if (parseInt(rankInfo.rank) > setting.min_rank) {
+    console.log(`Too high risk in case on disaster! ${rankInfo.rank} / ${setting.min_rank}`);
+    await addCacheInspected(detailObj)
+    return false;
+  }
+
+  if (!await meetCondition(detailObj)) {
+    await addCacheInspected(detailObj)
+    return false;
+  }
+
+  detailObj['rank'] = rankInfo.rank;
+  detailObj['latitude'] = rankInfo.latitude;
+  detailObj['longitude'] = rankInfo.longitude;
+
+  if (await CheckCacheByDetail(detailObj)) {
+    console.log('Already notified')
+    await addCacheNotified(detailObj)
+    return false;
+  }
+
+  await addCacheNotified(detailObj)
+  return true;
+}
+
 (async () => {
 
   // to create a connection to a nats-server:
@@ -194,33 +223,17 @@ notify = async (detailObjs) => {
           continue
         }
 
-        console.log(`[${msgs.getProcessed()}]:`, detailObj.address)
-
-        const rankInfo = await getRankInfo(detailObj.location);
-        console.log(`Type of rank : ${typeof(rankInfo.rank)} min_rank : ${setting.min_rank}`);
-        if (parseInt(rankInfo.rank) > setting.min_rank) {
-          console.log('Too high risk in case on disaster! ', rankInfo.rank);
-          await addCacheInspected(detailObj)
-          m.ack();
-          continue;
-        }
-
-        if (!await meetCondition(detailObj)) {
-          await addCacheInspected(detailObj)
-          m.ack();
-          continue;
-        }
-
-        detailObj['rank'] = rankInfo.rank;
-        detailObj['latitude'] = rankInfo.latitude;
-        detailObj['longitude'] = rankInfo.longitude;
-
-        if (await CheckCacheByDetail(detailObj)) {
-          console.log('Already notified')
+        if (Array.isArray(detailObj)) {
+          for (obj of detailObj) {
+            if (await checkDetailObj(obj)) {
+              roomsToBeNotified.push(obj)
+            }
+          }
         } else {
-          roomsToBeNotified.push(detailObj)
+          if (await checkDetailObj(detailObj)) {
+            roomsToBeNotified.push(detailObj)
+          }
         }
-        await addCacheNotified(detailObj)
         m.ack();
       }
       console.log('Completed fetch', roomsToBeNotified)
