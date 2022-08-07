@@ -1,0 +1,19 @@
+{
+  "name": "crawler-td",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@grpc/grpc-js": "^1.6.7",
+    "google-protobuf": "^3.20.1",
+    "nats": "^2.6.1",
+    "playwright-chromium": "1.21.1"
+  }
+}

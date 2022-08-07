@@ -43,6 +43,8 @@ const nats_server_url = process.env.NATS_SERVER_URL ? process.env.NATS_SERVER_UR
         nc.publish(`room-ken-${mode}`, sc.encode(url))
       } else if (url.includes("bluestudio.jp")) {
         nc.publish(`room-bs-${mode}`, sc.encode(url))
+      } else if (url.includes("tokyo-designers.com")) {
+        nc.publish(`room-td-${mode}`, sc.encode(url))
       }
 
       // const response = await new Promise((resolv, reject) => {

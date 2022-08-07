@@ -33,6 +33,7 @@ push_all: scanner-linea.arm64 crawler-linea.arm64 \
 					scanner-rnet.arm64 crawler-rnet.arm64 \
 					scanner-ken.arm64 crawler-ken.arm64 \
 					scanner-bs.arm64 crawler-bs.arm64 \
+					scanner-td.arm64 crawler-td.arm64 \
 					mediator.arm64 notifier.arm64 cache-mgr.arm64 \
 					area-info-mgr.arm64	imi-server.arm64
 
