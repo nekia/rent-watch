@@ -2,7 +2,9 @@ const nats = require('nats');
 const playwright = require('playwright-chromium');
 const express = require('express');
 const http = require('http');
+const { url } = require('inspector');
 
+const SITE_NAME = "SUUMO";
 const nats_server_url = process.env.NATS_SERVER_URL ? process.env.NATS_SERVER_URL : "127.0.0.1:4222";
 const nats_subject_roomurl = process.env.NATS_SUBJECT_ROOMURL ? process.env.NATS_SUBJECT_ROOMURL : "room-suumo-tky-rent";
 const nats_subject_roomdetail = process.env.NATS_SUBJECT_ROOMDETAIL ? process.env.NATS_SUBJECT_ROOMDETAIL : "roomdetails-tky-rent";
@@ -77,48 +79,94 @@ getBuiltYear = async (page) => {
   });
 }
 
-(async () => {
-  const app = express();
-  const router = express.Router();
+// (async () => {
+//   const app = express();
+//   const router = express.Router();
 
-  router.use((req, res, next) => {
-    res.header('Access-Control-Allow-Methods', 'GET');
-    next();
-  });
+//   router.use((req, res, next) => {
+//     res.header('Access-Control-Allow-Methods', 'GET');
+//     next();
+//   });
 
-  router.get('/health', (req, res) => {
-    const data = {
-      uptime: process.uptime(),
-      message: 'Ok',
-      date: new Date()
-    }
+//   router.get('/health', (req, res) => {
+//     const data = {
+//       uptime: process.uptime(),
+//       message: 'Ok',
+//       date: new Date()
+//     }
   
-    res.status(200).send(data);
-  });
+//     res.status(200).send(data);
+//   });
 
-  app.use('/api/v1', router);
+//   app.use('/api/v1', router);
 
-  const server = http.createServer(app);
-  server.listen(3000);
+//   const server = http.createServer(app);
+//   server.listen(3000);
 
+//   const nc = await nats.connect({ servers: nats_server_url });
+//   const js = nc.jetstream();
+
+//   // create a codec
+//   const sc = nats.StringCodec();
+//   const jc = nats.JSONCodec();
+//   // create a simple subscriber and iterate over messages
+//   // matching the subscription
+//   const sub = nc.subscribe(nats_subject_roomurl, { queue: "room" });
+//   (async () => {
+//     for await (const m of sub) {
+//       const address = sc.decode(m.data);
+//       console.log(`[${sub.getProcessed()}]: ${address}`);
+
+//       const detailObj = await scanRoomDetail(address);
+//       console.log(detailObj)
+//       js.publish(nats_subject_roomdetail, jc.encode(detailObj))
+//     }
+//     console.log("subscription closed");
+//   })();
+// })();
+
+(async () => {
+  console.log('nats_server_url', nats_server_url)
+
+  // to create a connection to a nats-server:
   const nc = await nats.connect({ servers: nats_server_url });
-  const js = nc.jetstream();
 
   // create a codec
   const sc = nats.StringCodec();
   const jc = nats.JSONCodec();
   // create a simple subscriber and iterate over messages
   // matching the subscription
-  const sub = nc.subscribe(nats_subject_roomurl, { queue: "room" });
-  (async () => {
-    for await (const m of sub) {
-      const address = sc.decode(m.data);
-      console.log(`[${sub.getProcessed()}]: ${address}`);
 
-      const detailObj = await scanRoomDetail(address);
-      console.log(detailObj)
-      js.publish(nats_subject_roomdetail, jc.encode(detailObj))
+  const subScanReq = nc.subscribe("scan-request");
+  (async () => {
+    for await (const m of subScanReq) {
+      const urlObj = jc.decode(m.data);
+      console.log(urlObj)
+      const url = urlObj.url;
+      const siteName = urlObj.siteName;
+
+      if( siteName !== SITE_NAME) {
+        console.log(`It's not a request for me: [${siteName}]`)
+        continue;
+      }
+
+      console.log(`[${subScanReq.getProcessed()}]: ${siteName}`);
+
+      const roomDetail = await scanRoomDetail(url);
+      console.log(roomDetail)
+      nc.publish("scan-response", jc.encode({ roomDetail }));
+
+      // const suScanResp = nc.subscribe("scan-response");
+      // (async () => {
+      //   for await (const m of suScanResp) {
+      //     const urlObj = jc.decode(m.data);
+      //     console.log(urlObj)
+      //     const roomDetail = urlObj.roomDetail;
+    
+      //     nc.publish("notify-request", sc.encode({ roomDetail }) );
+      //   }
+      // })
     }
     console.log("subscription closed");
   })();
-})();
+})()

@@ -9,7 +9,7 @@ const redis_server_url = process.env.REDIS_SERVER_URL ? process.env.REDIS_SERVER
 const redis = new Redis(redis_server_url); // uses defaults unless given configuration object
 
 const imi_server_url = process.env.IMI_SERVER_URL ? process.env.IMI_SERVER_URL : "http://127.0.0.1:8080";
-
+const grpc_service_port = process.env.GRPC_SERVICE_AREA_INFO_PORT ? process.env.GRPC_SERVICE_AREA_INFO_PORT : "50051";
 const LVL = [
   "都道府県",
   "市区町村",
@@ -63,7 +63,7 @@ getRank = async (call, callback) => {
     {
       getRank: getRank
     });
-  server.bindAsync('0.0.0.0:50051', grpc.ServerCredentials.createInsecure(), () => {
+  server.bindAsync(`0.0.0.0:${grpc_service_port}`, grpc.ServerCredentials.createInsecure(), () => {
     console.log("Started!")
     server.start();
   });

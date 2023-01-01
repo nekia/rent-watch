@@ -216,22 +216,23 @@ checkDetailObj = async (detailObj) => {
       for await (const m of msgs) {
         // do something with the message
         // and if the consumer is not set to auto-ack, ack!
-        const detailObj = jc.decode(m.data)
-        if (!detailObj) {
+        const respObj = jc.decode(m.data)
+        if (!respObj) {
           console.log('Null')
           m.ack();
           continue
         }
 
-        if (Array.isArray(detailObj)) {
-          for (obj of detailObj) {
-            if (await checkDetailObj(obj)) {
-              roomsToBeNotified.push(obj)
+        if (Array.isArray(respObj)) {
+          for (obj of respObj) {
+            if (await checkDetailObj(obj.roomDetail)) {
+              roomsToBeNotified.push(obj.roomDetail)
             }
           }
         } else {
-          if (await checkDetailObj(detailObj)) {
-            roomsToBeNotified.push(detailObj)
+          console.log(respObj)
+          if (await checkDetailObj(respObj.roomDetail)) {
+            roomsToBeNotified.push(respObj.roomDetail)
           }
         }
         m.ack();
