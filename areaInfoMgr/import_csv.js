@@ -50,6 +50,7 @@ fs.createReadStream(__dirname + '/all2.csv')
           await redis.set(key, JSON.stringify(value))
         });
     }
+    redis.disconnect();
   },{
     from: 2
   }))
