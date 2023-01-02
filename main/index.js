@@ -2,52 +2,107 @@ const nats = require('nats');
 
 const nats_server_url = process.env.NATS_SERVER_URL ? process.env.NATS_SERVER_URL : "127.0.0.1:4222";
 
-(async () => {
-  // console.log('nats_server_url', nats_server_url)
+let numRequest = 0;
+let numResponse = 0;
+let siteName = "";
 
-  // to create a connection to a nats-server:
-  const nc = await nats.connect({ servers: nats_server_url });
-  const js = nc.jetstream();
+(async () => {
 
   if (process.argv.length != 3) {
-    console.error("Need to specify site-name", process. process.argv)
+    console.error("Need to specify site-name", process.process.argv)
     nc.close()
     return;
   }
 
-  const siteName = process.argv[2];
+  siteName = process.argv[2];
   console.log(`Site-Name [${siteName}]`);
 
-  nc.publish("crawl-request", jc.encode({ siteName }) );
+  // to create a connection to a nats-server:
+  const nc = await nats.connect({ servers: nats_server_url });
+  const jc = nats.JSONCodec();
 
-  const subCrawlResp = nc.subscribe("crawl-response");
-  waitCrawlResp(js, subCrawlResp);
+  nc.publish("crawl-request", jc.encode({ siteName }));
 
-  const subScanResp = nc.subscribe("scan-response");
-  waitScanResp(js, subScanResp)
+  waitCrawlResp(nc);
+  waitScanRespWithStream(nc);
+
+  await nc.closed()
+    .then((err) => {
+      let m = `connection to ${nc.getServer()} closed`;
+      if (err) {
+        m = `${m} with an error: ${err.message}`;
+      }
+      console.log(m);
+    });
 })()
 
-waitCrawlResp = async (js, subResp) => {
+waitCrawlResp = async (nc) => {
   console.log("[Crawl Resp] Start waiting for response...")
-  const jc = nats.JSONCodec();
-  for await (const msgCrawl of subResp) {
-    const urlObj = jc.decode(msgCrawl.data);
-    const url = urlObj.url;
 
-    console.log(`[${subResp.getProcessed()}](crawl-response): ${url}`);
-    nc.publish("scan-request", jc.encode({ siteName, url }));
+  const jc = nats.JSONCodec();
+  try {
+    const subResp = nc.subscribe("crawl-response", { timeout: 600000 });
+
+    for await (const msgCrawl of subResp) {
+      const urlObj = jc.decode(msgCrawl.data);
+      const url = urlObj.url;
+
+      console.log(`[${subResp.getProcessed()}](crawl-response): ${url}`);
+      numRequest++;
+      nc.publish("scan-request", jc.encode({ siteName, url }));
+    }
+  } catch (error) {
+    switch (error.code) {
+      case nats.ErrorCode.Timeout:
+        console.log("[Crawl Resp] subscription time-out")
+        break;
+      default:
+        console.error("[Crawl Resp] handle error", error)
+        break;
+    }
+    await nc.drain();
+    await nc.close();
   }
   console.log("[Crawl Resp] subscription closed");
 }
 
-waitScanResp = async (js, subResp) => {
+waitScanRespWithStream = async (nc) => {
+
   console.log("[Scan Resp] Start waiting for response...")
+
+  const js = nc.jetstream();
   const jc = nats.JSONCodec();
-  for await (const msgScan of subResp) {
-    const detailObj = jc.decode(msgScan.data);
-    const roomDetail = detailObj.roomDetail;
-    console.log(`[${subResp.getProcessed()}](scan-response):`, {roomDetail} );
-    js.publish("notify-request", jc.encode({ roomDetail }));
+
+  try {
+    const subResp = nc.subscribe("scan-response", { timeout: 600000 });
+
+    for await (const msgScan of subResp) {
+      const detailObj = jc.decode(msgScan.data);
+      const roomDetail = detailObj.roomDetail;
+
+      console.log(`[${subResp.getProcessed()}](scan-response):`, { roomDetail });
+
+      await js.publish("notify-request", jc.encode({ roomDetail }));
+      numResponse++;
+      if (numRequest == numResponse) {
+        console.log("[Scan Resp] Completed to handle scan response", numRequest);
+        await nc.drain()
+        await nc.close()
+        break;
+      }
+    }
+  } catch (error) {
+    switch (error.code) {
+      case nats.ErrorCode.Timeout:
+        console.log("[Scan Resp] subscription time-out")
+        break;
+      default:
+        console.error("[Scan Resp] handle error", error)
+        break;
+    }
+    await nc.drain()
+    await nc.close()
   }
+
   console.log("[Scan Resp] subscription closed");
 }
