@@ -95,6 +95,14 @@ crawler-%: protogen.crawler-%
 	cd crawler/$* && \
 	$(DOCKER_BUILDX) --platform linux/amd64 -t ${REGISTRY_URL}/$@:$(COMMIT_HASH) --push
 
+main:
+	cd main && \
+	$(DOCKER_BUILD) -t $@:$(COMMIT_HASH)
+
+main.arm64:
+	cd main && \
+	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+
 mediator:
 	cd mediator && \
 	$(DOCKER_BUILD) -t $@:$(COMMIT_HASH)
