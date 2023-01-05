@@ -18,6 +18,7 @@ tmux select-pane -t 2
 tmux split-window -v
 tmux select-pane -t 4
 tmux split-window -v
+tmux split-window -v
 
 tmux select-pane -t 1
 tmux send-keys 'cd cacheMgr; ./start_local_test.sh' C-m
@@ -29,9 +30,12 @@ tmux select-pane -t 3
 tmux send-keys 'cd scanner/suumo; ./start_local_test.sh' C-m
 
 tmux select-pane -t 4
-tmux send-keys 'cd crawler/suumo; ./start_local_test.sh' C-m
+tmux send-keys 'cd scanner/suumo; ./start_local_test.sh' C-m
 
 tmux select-pane -t 5
+tmux send-keys 'cd crawler/suumo; ./start_local_test.sh' C-m
+
+tmux select-pane -t 6
 tmux send-keys 'cd notification; ./start_local_test.sh' C-m
 
 tmux select-pane -t 0
