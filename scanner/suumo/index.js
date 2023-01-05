@@ -26,7 +26,7 @@ scanRoomDetail = async (address) => {
   const browser = await playwright['chromium'].launch({ headless: true });
   const context = await getNewContext(browser);
   const roomPage = await getNewPage(context);
-  let price = 0.0, size = 0.0, floorLevel = {}, location = "", builtYear = 0;
+  let price = 0.0, size = 0.0, floorLevel = {}, location = "", builtYear = 0, isPetOK = false;
   try {
     await roomPage.goto(address);
     await roomPage.waitForTimeout(1000)
@@ -35,12 +35,13 @@ scanRoomDetail = async (address) => {
     floorLevel = await getFloorLevel(roomPage)
     location = await getLocation(roomPage)
     builtYear = await getBuiltYear(roomPage)
+    isPetOK = await getPetOK(roomPage)
   } catch (error) {
     console.warn('## Failed to retrieve the detail ##', address, error)
   }
   await roomPage.close()
   await browser.close();
-  return { address, price, size, floorLevel, location, builtYear }
+  return { address, price, size, floorLevel, location, builtYear, isPetOK }
 }
 
 getPriceFloat = async (page) => {
@@ -77,6 +78,12 @@ getBuiltYear = async (page) => {
     const builtYrStr = result.match(/(\d+)年/)
     return parseInt(builtYrStr[1])
   });
+}
+
+getPetOK = async (page) => {
+  return page.$('//th[text()="条件"]/following-sibling::td[1]')
+    .then( elm => elm.innerText() )
+    .then( str => str.includes("ペット") )
 }
 
 (async () => {
