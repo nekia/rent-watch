@@ -131,7 +131,7 @@ CheckCacheByDetail = (detailObj) => {
 notifyLine = async (roomObj) => {
   if (ENABLE_NOTIFY) {
     console.log(`New room !!`, roomObj.address)
-    let message = isPetOK in roomObj ? ( roomObj.isPetOK ? "ペットOK\n" : "" ) : "";
+    let message = "isPetOK" in roomObj ? ( roomObj.isPetOK ? "ペットOK\n" : "" ) : "";
 
     message += `${roomObj.price}万円 ${roomObj.size}平米 ${roomObj.floorLevel.floorLevel}/${roomObj.floorLevel.floorTopLevel}\n`
     message += `${roomObj.location}\n${roomObj.address}`
