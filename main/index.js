@@ -2,19 +2,13 @@ const nats = require('nats');
 
 const nats_server_url = process.env.NATS_SERVER_URL ? process.env.NATS_SERVER_URL : "127.0.0.1:4222";
 
+const siteName = process.env.WATCHING_SITE_NAME ? process.env.WATCHING_SITE_NAME : "HOMES";
+
 let numRequest = 0;
 let numResponse = 0;
-let siteName = "";
 
 (async () => {
 
-  if (process.argv.length != 3) {
-    console.error("Need to specify site-name", process.process.argv)
-    nc.close()
-    return;
-  }
-
-  siteName = process.argv[2];
   console.log(`Site-Name [${siteName}]`);
 
   // to create a connection to a nats-server:

@@ -9,4 +9,7 @@ RUN arch=$(arch | sed s/aarch64/arm64/ | sed s/x86_64/amd64/) && \
 
 RUN npm i
 
-CMD nats --server=nats://nats-server:4222 consumer add mystream --config setting/consumer-config.json; bash -c "npm start"
+CMD \
+    nats --server=nats://nats-server:4222 stream add mystream --config setting/stream-config.json; \
+    nats --server=nats://nats-server:4222 consumer add mystream --config setting/consumer-config.json; \
+    bash -c "npm start"
