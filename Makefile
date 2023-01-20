@@ -46,10 +46,10 @@ protogen.crawler-%:
 		./protobuf/cacheMgr.proto ./protobuf/roomdetail.proto
 
 protogen.notifier:
-	rm -rf notification/generated
-	mkdir -p notification/generated
-	$(GRPC_TOOL) --js_out=import_style=commonjs,binary:notification/generated \
-		--grpc_out=grpc_js:notification/generated \
+	rm -rf notifier/generated
+	mkdir -p notifier/generated
+	$(GRPC_TOOL) --js_out=import_style=commonjs,binary:notifier/generated \
+		--grpc_out=grpc_js:notifier/generated \
 		--proto_path=protobuf \
 		./protobuf/cacheMgr.proto ./protobuf/roomdetail.proto \
 		./protobuf/areaInfoMgr.proto
@@ -112,11 +112,11 @@ mediator.arm64:
 	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
 notifier: protogen.notifier
-	cd notification && \
+	cd notifier && \
 	$(DOCKER_BUILD) -t $@:$(COMMIT_HASH)
 
 notifier.arm64: protogen.notifier
-	cd notification && \
+	cd notifier && \
 	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
 cache-mgr: protogen.cache-mgr

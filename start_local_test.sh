@@ -36,7 +36,7 @@ tmux select-pane -t 5
 tmux send-keys 'cd crawler/suumo; ./start_local_test.sh' C-m
 
 tmux select-pane -t 6
-tmux send-keys 'cd notification; ./start_local_test.sh' C-m
+tmux send-keys 'cd notifier; ./start_local_test.sh' C-m
 
 tmux select-pane -t 0
 tmux send-keys 'sleep 5; cd main; ./start_local_test.sh' C-m
@@ -56,7 +56,7 @@ tmux send-keys 'sleep 5; cd main; ./start_local_test.sh' C-m
 # tmux send-keys -t $session:$window 'cd crawler/suumo; ./start_local_test.sh' C-m
 
 # tmux split-window -v -t $session:$window
-# tmux send-keys -t $session:$window 'cd notification; ./start_local_test.sh' C-m
+# tmux send-keys -t $session:$window 'cd notifier; ./start_local_test.sh' C-m
 
 # tmux split-window -v -t $session:$window
 # tmux send-keys -t $session:$window 'cd main; ./start_local_test.sh' C-m

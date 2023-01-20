@@ -10,7 +10,7 @@ docker run -d --name nats-test -p 4222:4222 nats:latest -js
 pushd scanner/suumo
 nats --server=nats://localhost:4222 stream add mystream --config ./stream-config.json
 popd
-pushd notification
+pushd notifier
 nats --server=nats://localhost:4222 consumer add mystream --config setting/consumer-config.json
 popd
 
