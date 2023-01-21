@@ -9,7 +9,7 @@ let numResponse = 0;
 
 (async () => {
 
-  console.log(`Site-Name [${siteName}]`);
+  console.log(`Site-Name [${siteName}]!`);
 
   // to create a connection to a nats-server:
   const nc = await nats.connect({ servers: nats_server_url });

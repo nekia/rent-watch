@@ -199,6 +199,8 @@ checkDetailObj = async (detailObj) => {
 
 (async () => {
 
+  console.log("Notifier: Started!")
+
   // to create a connection to a nats-server:
   const nc = await nats.connect({ servers: nats_server_url });
 
