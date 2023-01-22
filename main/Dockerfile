@@ -1,6 +1,6 @@
-FROM node:12.22.11
+FROM node:14 as build
 
-COPY . /usr/src/app
+COPY ./main /usr/src/app
 WORKDIR /usr/src/app
 
 # playwrightインストール

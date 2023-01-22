@@ -37,6 +37,15 @@ push_all: scanner-linea.arm64 crawler-linea.arm64 \
 					mediator.arm64 notifier.arm64 cache-mgr.arm64 \
 					area-info-mgr.arm64	imi-server.arm64
 
+protogen.commit:
+	rm -rf pbjs_generated
+	mkdir -p pbjs_generated
+	$(GRPC_TOOL) --js_out=import_style=commonjs,binary:pbjs_generated \
+		--grpc_out=grpc_js:pbjs_generated \
+		--proto_path=protobuf \
+		./protobuf/cacheMgr.proto ./protobuf/roomdetail.proto \
+		./protobuf/areaInfoMgr.proto
+
 protogen.crawler-%:
 	rm -rf crawler/$*/generated
 	mkdir -p crawler/$*/generated
