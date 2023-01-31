@@ -1,6 +1,6 @@
 FROM 192.168.0.133:30007/pwbase:1.0.0
 
-COPY . /usr/src/app/
+COPY ./scanner/suumo /usr/src/app/
 WORKDIR /usr/src/app/
 
 # playwrightインストール

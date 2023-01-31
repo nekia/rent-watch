@@ -1,6 +1,6 @@
-FROM node:12.22.11
+FROM node:14
 
-COPY . /usr/src/app/
+COPY ./cacheMgr /usr/src/app/
 WORKDIR /usr/src/app
 
 RUN npm i
