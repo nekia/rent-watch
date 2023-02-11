@@ -89,60 +89,41 @@ ngrok.arm64:
 	$(DOCKER_BUILDX) -f Dockerfile-ngrok --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
 scanner-%.arm64:
-	cd scanner/$* && \
-	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+	$(DOCKER_BUILDX) -f scanner/$(patsubst scanner-%.arm64,%,$@)/Dockerfile --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
 scanner-%:
 	cd scanner/$* && \
-	$(DOCKER_BUILDX) --platform linux/amd64 -t ${REGISTRY_URL}/$@:$(COMMIT_HASH) --push
+	$(DOCKER_BUILDX) -f scanner/$(patsubst scanner-%,%,$@)/Dockerfile --platform linux/amd64 -t ${REGISTRY_URL}/$@:$(COMMIT_HASH) --push
 
 crawler-%.arm64: protogen.crawler-%
-	cd crawler/$* && \
-	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+	$(DOCKER_BUILDX) -f crawler/$(patsubst crawler-%.arm64,%,$@)/Dockerfile --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
 crawler-%: protogen.crawler-%
-	cd crawler/$* && \
-	$(DOCKER_BUILDX) --platform linux/amd64 -t ${REGISTRY_URL}/$@:$(COMMIT_HASH) --push
+	$(DOCKER_BUILDX) -f crawler/$(patsubst crawler-%.arm64,%,$@)/Dockerfile --platform linux/amd64 -t ${REGISTRY_URL}/$@:$(COMMIT_HASH) --push
 
 main:
-	cd main && \
-	$(DOCKER_BUILD) -t $@:$(COMMIT_HASH)
+	$(DOCKER_BUILD) -f main/Dockerfile -t $@:$(COMMIT_HASH)
 
 main.arm64:
-	cd main && \
-	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
-
-mediator:
-	cd mediator && \
-	$(DOCKER_BUILD) -t $@:$(COMMIT_HASH)
-
-mediator.arm64:
-	cd mediator && \
-	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+	$(DOCKER_BUILDX) -f main/Dockerfile --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
 notifier: protogen.notifier
-	cd notifier && \
-	$(DOCKER_BUILD) -t $@:$(COMMIT_HASH)
+	$(DOCKER_BUILD) -f notifier/Dockerfile -t $@:$(COMMIT_HASH)
 
 notifier.arm64: protogen.notifier
-	cd notifier && \
-	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+	$(DOCKER_BUILDX) -f notifier/Dockerfile --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
-cache-mgr: protogen.cache-mgr
-	cd cacheMgr && \
-	$(DOCKER_BUILD) -t $@:$(COMMIT_HASH)
+cachemgr: protogen.cache-mgr
+	$(DOCKER_BUILD) -f cacheMgr/Dockerfile -t $@:$(COMMIT_HASH)
 
-cache-mgr.arm64: protogen.cache-mgr
-	cd cacheMgr && \
-	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+cachemgr.arm64: protogen.cache-mgr
+	$(DOCKER_BUILDX) -f cacheMgr/Dockerfile --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
-area-info-mgr: protogen.area-info-mgr
-	cd areaInfoMgr && \
-	$(DOCKER_BUILD) -t $@:$(COMMIT_HASH)
+areainfomgr: protogen.area-info-mgr
+	$(DOCKER_BUILD) -f areaInfoMgr/Dockerfile -t $@:$(COMMIT_HASH)
 
-area-info-mgr.arm64: protogen.area-info-mgr
-	cd areaInfoMgr && \
-	$(DOCKER_BUILDX) --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
+areainfomgr.arm64: protogen.area-info-mgr
+	$(DOCKER_BUILDX) -f areaInfoMgr/Dockerfile --platform linux/arm64 -t ${REGISTRY_URL}/$(patsubst %.arm64,%,$@):$(COMMIT_HASH) --push
 
 imi-server: 
 	cd areaInfoMgr && \

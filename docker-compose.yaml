@@ -63,28 +63,28 @@ services:
     environment:
       - NATS_SERVER_URL=nats-server:4222
       - NATS_CONSUMER_NAME=myconsumer
-      - CACHE_MGR_URL=cache-mgr:50051
+      - CACHE_MGR_URL=cachemgr:50051
       - LINE_NOTIFY_TOKEN=<YOUR LINE NOTIFY TOKEN>
       - ENABLE_NOTIFY=0
     depends_on:
       - nats-server
-      - cache-mgr
+      - cachemgr
   notifier-ngy:
     image: "notifier:1.0.0"
     environment:
       - NATS_SERVER_URL=nats-server:4222
       - NATS_CONSUMER_NAME=myconsumer2
-      - CACHE_MGR_URL=cache-mgr:50051
+      - CACHE_MGR_URL=cachemgr:50051
       - LINE_NOTIFY_TOKEN=<YOUR LINE NOTIFY TOKEN>
       - ENABLE_NOTIFY=1
     depends_on:
       - nats-server
-      - cache-mgr
+      - cachemgr
       - scanner-homes-ngy
     volumes:
       - ./notification/setting-ngy-rent:/usr/src/app/setting
-  cache-mgr:
-    image: "cache-mgr:1.0.0"
+  cachemgr:
+    image: "cachemgr:1.0.0"
     ports:
       - 50051:50051
     environment:
