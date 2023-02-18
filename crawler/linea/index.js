@@ -6,6 +6,7 @@ const setting = require('./setting/setting.json');
 const messages = require('./generated/cacheMgr_pb');
 const services = require('./generated/cacheMgr_grpc_pb');
 
+const SITE_NAME = "LINEA";
 const nats_server_url = process.env.NATS_SERVER_URL ? process.env.NATS_SERVER_URL : "127.0.0.1:4222";
 const cache_mgr_url = process.env.CACHE_MGR_URL ? process.env.CACHE_MGR_URL : "127.0.0.1:50051";
 
@@ -27,7 +28,7 @@ openNConn = () => {
 
 publishRoom = (nc, url) => {
   const jc = nats.JSONCodec();
-  nc.publish("rooms", jc.encode({ url: url, mode: setting.mode }));
+  nc.publish("crawl-response", jc.encode({ url }));
 }
 
 closeNConn = async (nc) => {
@@ -127,7 +128,7 @@ pagenation = async (page) => {
   }
 }
 
-(async () => {
+startCrawl = async () => {
 
   const browser = await playwright['chromium'].launch({ headless: true });
   const context = await getNewContext(browser);
@@ -154,4 +155,38 @@ pagenation = async (page) => {
 
   await page.close()
   await browser.close();
-})();
+};
+
+(async () => {
+  console.log('nats_server_url', nats_server_url)
+
+  // to create a connection to a nats-server:
+  const nc = await nats.connect({ servers: nats_server_url });
+
+  // create a codec
+  const sc = nats.StringCodec();
+  const jc = nats.JSONCodec();
+  // create a simple subscriber and iterate over messages
+  // matching the subscription
+
+  const subCrawlReq = nc.subscribe("crawl-request");
+  (async () => {
+    for await (const m of subCrawlReq) {
+      console.log(m)
+      const urlObj = jc.decode(m.data);
+      console.log(urlObj)
+      const siteName = urlObj.siteName;
+
+      if( siteName !== SITE_NAME) {
+        console.log(`It's not a request for me: [${siteName}]`)
+        continue;
+      }
+
+      console.log(`[${subCrawlReq.getProcessed()}]: ${siteName}`);
+
+      startCrawl()
+    }
+    console.log("subscription closed");
+  })();
+})()
+  
